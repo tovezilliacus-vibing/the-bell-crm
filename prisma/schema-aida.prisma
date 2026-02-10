@@ -1,0 +1,225 @@
+// AIDA CRM — Full target schema (use after migration from current schema)
+// See docs/AIDA-DATA-MODEL.md for folder structure and justifications.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ——— AIDA & shared enums ———
+
+enum FunnelStage {
+  AWARENESS
+  INTEREST
+  DESIRE
+  ACTION
+}
+
+enum ActivityType {
+  EMAIL
+  CALL
+  NOTE
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum LeadSource {
+  INBOUND
+  OUTREACH
+  EVENT
+  REFERRAL
+  OTHER
+}
+
+enum DealStage {
+  INITIATING
+  NEEDS_DEVELOPMENT
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// ——— Core entities ———
+
+model Campaign {
+  id         String   @id @default(cuid())
+  name       String
+  utmSource  String?
+  utmMedium  String?
+  utmCampaign String?
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contacts Contact[]
+
+  @@map("campaigns")
+}
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  domain        String?
+  isAccount     Boolean  @default(false)
+  userId        String
+  industry      String?
+  sizeTurnover  String?
+  sizePersonnel String?
+  city          String?
+  state         String?
+  country       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contacts Contact[]
+  deals    Deal[]
+
+  @@map("companies")
+}
+
+model Contact {
+  id           String       @id @default(cuid())
+  firstName    String?
+  lastName     String?
+  name         String?
+  email        String?
+  phone        String?
+  funnelStage  FunnelStage   @default(AWARENESS)
+  campaignId   String?
+  leadSource   LeadSource?
+  referralFrom String?
+  companyId    String?
+  userId       String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  company   Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  campaign  Campaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  deals     Deal[]
+  tasks     Task[]
+  activities Activity[]
+  emails    Email[]
+
+  @@map("contacts")
+}
+
+model ProspectFieldOption {
+  id        String   @id @default(cuid())
+  userId    String
+  fieldType String
+  value     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, fieldType, value])
+  @@map("prospect_field_options")
+}
+
+model Deal {
+  id        String    @id @default(cuid())
+  title     String
+  value     Decimal   @db.Decimal(12, 2) @default(0)
+  stage     DealStage @default(INITIATING)
+  companyId String?
+  contactId String?
+  userId    String
+  closedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contact Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  tasks   Task[]
+  activities Activity[]
+
+  @@map("deals")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  status      TaskStatus  @default(PENDING)
+  dueAt       DateTime?
+  completedAt DateTime?
+  contactId   String?
+  dealId      String?
+  userId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String?      @db.Text
+  occurredAt  DateTime     @default(now())
+  contactId   String?
+  dealId      String?
+  userId      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deal    Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+// ——— Phase 6: Email (optional; personId → contactId when using Contact) ———
+
+model UserEmailAccount {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String
+  email        String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  emails Email[]
+
+  @@unique([userId, provider])
+  @@map("user_email_accounts")
+}
+
+model Email {
+  id                String   @id @default(cuid())
+  userId            String
+  userEmailAccountId String?
+  contactId         String?
+  provider          String
+  providerMessageId String
+  threadId          String?
+  direction         String
+  fromAddress       String
+  toAddresses       String
+  subject           String?
+  bodySnippet       String?  @db.Text
+  body              String?  @db.Text
+  sentAt            DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contact          Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  userEmailAccount UserEmailAccount? @relation(fields: [userEmailAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, provider, providerMessageId])
+  @@map("emails")
+}
