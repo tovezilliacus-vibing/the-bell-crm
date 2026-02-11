@@ -43,9 +43,13 @@ export default async function TasksPage({
     );
   }
 
-  const workspaceId = await ensureWorkspaceForUser(userId);
-  const dateWhere = getDateRange(filter);
-  const tasks = await prisma.task.findMany({
+  let workspaceId: string;
+  let tasks: Awaited<ReturnType<typeof prisma.task.findMany>>;
+  let contact: Awaited<ReturnType<typeof prisma.contact.findFirst>>;
+  try {
+    workspaceId = await ensureWorkspaceForUser(userId);
+    const dateWhere = getDateRange(filter);
+    tasks = await prisma.task.findMany({
     where: {
       workspaceId,
       status: "PENDING",
@@ -59,13 +63,17 @@ export default async function TasksPage({
     },
     orderBy: { dueAt: "asc" },
   });
-
-  const contact = contactId
-    ? await prisma.contact.findFirst({
-        where: { id: contactId, workspaceId },
-        select: { id: true, firstName: true, lastName: true, name: true },
-      })
-    : null;
+    contact = contactId
+      ? await prisma.contact.findFirst({
+          where: { id: contactId, workspaceId },
+          select: { id: true, firstName: true, lastName: true, name: true },
+        })
+      : null;
+  } catch (e) {
+    console.error("[Tasks] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load tasks. Please try again." />;
+  }
 
   return (
     <div className="p-6 space-y-6">

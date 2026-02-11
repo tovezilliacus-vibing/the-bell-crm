@@ -26,8 +26,16 @@ export default async function FormsListPage() {
       </div>
     );
   }
-  const workspaceId = await ensureWorkspaceForUser(userId);
-  const forms = await getForms(workspaceId);
+  let workspaceId: string;
+  let forms: Awaited<ReturnType<typeof getForms>>;
+  try {
+    workspaceId = await ensureWorkspaceForUser(userId);
+    forms = await getForms(workspaceId);
+  } catch (e) {
+    console.error("[Forms] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load forms. Please try again." />;
+  }
 
   return (
     <div className="p-6 space-y-6">

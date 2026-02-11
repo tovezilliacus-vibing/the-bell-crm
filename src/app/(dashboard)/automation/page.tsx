@@ -7,14 +7,20 @@ import { RecipeToggle } from "./RecipeToggle";
 export default async function AutomationPage() {
   const { userId } = await auth();
 
-  const settings = userId
-    ? await prisma.automationRecipeSetting.findMany({
-        where: { userId },
-        select: { recipeId: true, enabled: true },
-      })
-    : [];
-
-  const enabledByRecipeId = new Map(settings.map((s) => [s.recipeId, s.enabled]));
+  let enabledByRecipeId: Map<string, boolean>;
+  try {
+    const settings = userId
+      ? await prisma.automationRecipeSetting.findMany({
+          where: { userId },
+          select: { recipeId: true, enabled: true },
+        })
+      : [];
+    enabledByRecipeId = new Map(settings.map((s) => [s.recipeId, s.enabled]));
+  } catch (e) {
+    console.error("[Automation] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load automation. Please try again." />;
+  }
 
   return (
     <div className="p-6 space-y-6">

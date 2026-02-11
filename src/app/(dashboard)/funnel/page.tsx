@@ -25,8 +25,11 @@ export default async function FunnelPage() {
     );
   }
 
-  const workspaceId = await ensureWorkspaceForUser(userId);
-  const [metrics, contactsByStage] = await Promise.all([
+  let metrics: Awaited<ReturnType<typeof getFunnelMetrics>>;
+  let contactsByStage: Awaited<ReturnType<typeof prisma.contact.findMany>>[];
+  try {
+    const workspaceId = await ensureWorkspaceForUser(userId);
+    [metrics, contactsByStage] = await Promise.all([
     getFunnelMetrics(workspaceId),
     Promise.all(
       FUNNEL_STAGES.map((stage) =>
@@ -38,6 +41,11 @@ export default async function FunnelPage() {
       )
     ),
   ]);
+  } catch (e) {
+    console.error("[Funnel] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load the funnel. Please try again." />;
+  }
 
   const conversionMap = new Map(
     metrics.conversionLast30Days.map((c) => [

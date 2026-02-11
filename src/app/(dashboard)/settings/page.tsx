@@ -32,24 +32,30 @@ export default async function SettingsPage() {
     dealsLimit: number;
   } | null = null;
   if (userId) {
-    const workspaceId = await ensureWorkspaceForUser(userId);
-    const [workspace, contactsCount, membersCount, dealsCount] = await Promise.all([
-      getWorkspace(workspaceId),
-      prisma.contact.count({ where: { workspaceId } }),
-      prisma.workspaceMember.count({ where: { workspaceId } }),
-      prisma.deal.count({ where: { workspaceId } }),
-    ]);
-    const limits = workspace ? getPlanLimits(workspace.plan) : null;
-    if (workspace && limits) {
-      usage = {
-        plan: workspace.plan,
-        contacts: contactsCount,
-        contactsLimit: limits.contacts,
-        users: membersCount,
-        usersLimit: limits.users,
-        deals: dealsCount,
-        dealsLimit: limits.deals,
-      };
+    try {
+      const workspaceId = await ensureWorkspaceForUser(userId);
+      const [workspace, contactsCount, membersCount, dealsCount] = await Promise.all([
+        getWorkspace(workspaceId),
+        prisma.contact.count({ where: { workspaceId } }),
+        prisma.workspaceMember.count({ where: { workspaceId } }),
+        prisma.deal.count({ where: { workspaceId } }),
+      ]);
+      const limits = workspace ? getPlanLimits(workspace.plan) : null;
+      if (workspace && limits) {
+        usage = {
+          plan: workspace.plan,
+          contacts: contactsCount,
+          contactsLimit: limits.contacts,
+          users: membersCount,
+          usersLimit: limits.users,
+          deals: dealsCount,
+          dealsLimit: limits.deals,
+        };
+      }
+    } catch (e) {
+      console.error("[Settings] load failed:", e);
+      const { PageUnavailable } = await import("@/components/PageUnavailable");
+      return <PageUnavailable message="We couldn't load settings. Please try again." />;
     }
   }
 

@@ -42,8 +42,13 @@ export default async function ContactListPage({
     );
   }
 
-  const workspaceId = await ensureWorkspaceForUser(userId);
-  const [contacts, companies, prospectOptions] = await Promise.all([
+  let workspaceId: string;
+  let contacts: Awaited<ReturnType<typeof prisma.contact.findMany>>;
+  let companies: Awaited<ReturnType<typeof prisma.company.findMany>>;
+  let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptions>>;
+  try {
+    workspaceId = await ensureWorkspaceForUser(userId);
+    [contacts, companies, prospectOptions] = await Promise.all([
     prisma.contact.findMany({
       where: { workspaceId, ...(stageFilter && { funnelStage: stageFilter }) },
       include: {
@@ -69,6 +74,11 @@ export default async function ContactListPage({
     }),
     getProspectFieldOptions(userId),
   ]);
+  } catch (e) {
+    console.error("[Contacts] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load contacts. Please try again." />;
+  }
 
   const industryOptions = prospectOptions.filter((o) => o.fieldType === "industry");
   const sizeTurnoverOptions = prospectOptions.filter((o) => o.fieldType === "size_turnover");

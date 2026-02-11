@@ -12,14 +12,20 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 export default async function CampaignsPage() {
   const { userId } = await auth();
-  const workspaceId = userId ? await ensureWorkspaceForUser(userId) : null;
-
-  const campaigns = workspaceId
-    ? await prisma.campaign.findMany({
-        where: { workspaceId },
-        orderBy: { createdAt: "desc" },
-      })
-    : [];
+  let campaigns: Awaited<ReturnType<typeof prisma.campaign.findMany>> = [];
+  try {
+    const workspaceId = userId ? await ensureWorkspaceForUser(userId) : null;
+    campaigns = workspaceId
+      ? await prisma.campaign.findMany({
+          where: { workspaceId },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+  } catch (e) {
+    console.error("[Campaigns] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load campaigns. Please try again." />;
+  }
 
   return (
     <div className="p-6 space-y-6">

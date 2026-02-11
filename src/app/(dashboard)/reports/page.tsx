@@ -73,8 +73,15 @@ export default async function ReportsPage({
     );
   }
 
-  const workspaceId = await ensureWorkspaceForUser(userId);
-  const metrics = await getReportMetrics(workspaceId, start, end);
+  let metrics: Awaited<ReturnType<typeof getReportMetrics>>;
+  try {
+    const workspaceId = await ensureWorkspaceForUser(userId);
+    metrics = await getReportMetrics(workspaceId, start, end);
+  } catch (e) {
+    console.error("[Reports] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load reports. Please try again." />;
+  }
 
   return (
     <div className="p-6 space-y-6">

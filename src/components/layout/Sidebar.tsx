@@ -43,17 +43,16 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full w-56 flex-col border-r border-border bg-card/95 backdrop-blur-sm">
-      <div className="flex h-14 items-center border-b border-primary bg-primary px-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold min-w-0">
+      <div className="flex h-16 items-center justify-center border-b border-primary bg-primary px-3">
+        <Link href="/" className="flex items-center justify-center min-w-0">
           <Image
             src="/logo.png"
             alt="The Bell"
-            width={120}
-            height={32}
-            className="h-8 w-auto object-contain object-left"
+            width={160}
+            height={44}
+            className="h-11 w-auto max-w-[180px] object-contain object-center"
             priority
           />
-          <span className="text-xs text-primary-foreground/80 shrink-0">CRM</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-0.5 p-2">
