@@ -38,6 +38,28 @@ If **all** dashboard pages show “Page unavailable” (or “We couldn’t load
 
 After running the scripts, redeploy or refresh the app. To see the **exact** error (e.g. missing table name), check **Vercel → your project → Logs** (or **Functions**) and look for `[Dashboard] ensureWorkspaceForUser failed:` or `[Settings] load failed:` etc.
 
+## Fix `PrismaClientInitializationError` (Dashboard / Settings “unavailable”)
+
+If Vercel logs show **`PrismaClientInitializationError`** (e.g. for `workspaceMember` or `prospectFieldOption`) and `DATABASE_URL` is correct, the cause is usually **how** Prisma connects to Supabase in serverless, not missing tables.
+
+**Do this:**
+
+1. **Use the connection pooler (Transaction mode), not the direct connection**
+   - In **Supabase Dashboard** → **Project Settings** → **Database** → **Connect** → choose **Transaction** (or “Connection pooling” with port **6543**).
+   - Copy that URI. It will look like:
+     - `postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres`
+     - or `postgres://postgres.[PROJECT-REF]:[PASSWORD]@...pooler.supabase.com:6543/postgres`
+
+2. **Append `?pgbouncer=true` to the URL**
+   - Supabase’s pooler (Supavisor) works like PgBouncer in transaction mode. Prisma must be told so it doesn’t use prepared statements in a way that breaks.
+   - In **Vercel** → **Settings** → **Environment Variables**, set **`DATABASE_URL`** to that pooler URI **with** `?pgbouncer=true` at the end, for example:
+     - `postgresql://postgres.xxxxx:YOUR_PASSWORD@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true`
+   - If the URI already has a query string (e.g. `?foo=bar`), use `&pgbouncer=true` instead of `?pgbouncer=true`.
+
+3. **Redeploy** the project so the new `DATABASE_URL` is used.
+
+After this, the same schema and tables will be used, but Prisma will use the pooler in a compatible way and the initialization error should stop.
+
 ## Planned site structure: landing vs app
 
 **Goal:** `thebellcrm.eu` = marketing landing page (public). `app.thebellcrm.eu` = the actual CRM app (sign-in, dashboard, etc.).
@@ -65,13 +87,57 @@ Right now, visiting the root URL while logged out redirects to sign-in. When you
 
 ## Still “Page unavailable” after running SQL?
 
-If you’ve run all the Supabase scripts and pages (or Settings) still fail:
+If you’ve run all the Supabase scripts and pages (or Settings) still fail, do the following.
 
-1. **Confirm the right database**  
-   In Vercel, check that `DATABASE_URL` for Production is the **connection string for the Supabase project** where you ran the scripts (not a different env or local DB).
+### 1. Confirm Vercel uses the same Supabase project
 
-2. **Check Vercel logs**  
-   Vercel → Project → Logs (or Functions). Reproduce the error, then search for `ensureWorkspaceForUser failed`, `load failed`, or the request’s digest. The log line will show the real error (e.g. relation "x" does not exist, or column "y" does not exist).
+You need to make sure the app in production talks to the **same** Supabase project where you ran the SQL scripts.
 
-3. **Inspect production schema**  
-   In Supabase → SQL Editor, run `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;` to list tables. Ensure `workspaces`, `workspace_members`, `contacts`, `companies`, `prospect_field_options`, `forms`, `automation_recipe_settings`, etc. exist. If any table or column is missing, run the corresponding script again or fix the schema to match Prisma.
+**Get the Supabase connection string (the DB you ran scripts in):**
+
+1. Open [Supabase Dashboard](https://supabase.com/dashboard) and select the project where you ran the scripts.
+2. Go to **Project Settings** (gear icon in the sidebar) → **Database**.
+3. Under **Connection string**, choose **URI**.
+4. Copy the URI. It looks like:  
+   `postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres`  
+   The important part is **`[PROJECT-REF]`** and the **host** (e.g. `aws-0-eu-central-1.pooler.supabase.com`). That identifies the project.
+
+**Check what Vercel is using:**
+
+1. Open [Vercel Dashboard](https://vercel.com) → your project (The Bell CRM).
+2. Go to **Settings** → **Environment Variables**.
+3. Find **`DATABASE_URL`** (Production). You can click **Reveal** to see the value (or edit to compare).
+4. Compare with the Supabase URI:
+   - Same **host** (e.g. `…pooler.supabase.com`) and same **project ref** (e.g. `postgres.abcdefgh`) → same project.
+   - Different host or different project ref → Vercel is using a **different** database. Update `DATABASE_URL` in Vercel to the Supabase **Production** URI (with the correct password), save, then **redeploy** (Deployments → … on latest → Redeploy).
+
+**If you have multiple Supabase projects:** Use the one where you actually ran the SQL scripts (the one you see in the SQL Editor). That’s the one whose connection string must be in Vercel’s `DATABASE_URL`.
+
+### 2. Find the exact error in Vercel logs
+
+The “Page unavailable” message is generic; the real error is in the server logs.
+
+1. Vercel Dashboard → your project → **Logs** (or **Monitoring** → **Logs**).
+2. Trigger the error: in the browser go to e.g. **Settings** or **Dashboard** so the page shows “Page unavailable”.
+3. In Vercel Logs, look at the time of that request. Filter by **Function** or search for your domain.
+4. Open the log entry for that request. Look for a line containing:
+   - `[Settings] load failed:` or  
+   - `[Dashboard] ensureWorkspaceForUser failed:` or  
+   - `[Contacts] load failed:`  
+   (or similar from other pages).
+5. The next line (or the same line) usually shows the real error, e.g.:
+   - `relation "workspaces" does not exist` → run `supabase-workspace-billing.sql`.
+   - `relation "prospect_field_options" does not exist` → run `supabase-lead-fields.sql`.
+   - `column "workspaceId" does not exist` → run `supabase-verify-workspace-columns.sql`.
+
+Use that exact message to decide which script to run (or re-run) in the **same** Supabase project you confirmed in step 1.
+
+### 3. Inspect tables in Supabase
+
+In the **same** Supabase project (SQL Editor), run:
+
+```sql
+SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
+```
+
+You should see tables such as `workspaces`, `workspace_members`, `contacts`, `companies`, `prospect_field_options`, `forms`, `automation_recipe_settings`, etc. If something is missing, run the corresponding script from the repo again.

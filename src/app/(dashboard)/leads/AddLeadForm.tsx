@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,39 @@ import { Select, type SelectOption } from "@/components/ui/select";
 import { LEAD_SOURCE_OPTIONS } from "@/lib/leads";
 import type { LeadSource } from "@prisma/client";
 import { createLead } from "./actions";
+
+/** Default industry options when none are defined in Settings. */
+const DEFAULT_INDUSTRIES: SelectOption[] = [
+  { value: "Technology", label: "Technology" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Finance", label: "Finance" },
+  { value: "Retail", label: "Retail" },
+  { value: "Manufacturing", label: "Manufacturing" },
+  { value: "Professional services", label: "Professional services" },
+  { value: "Education", label: "Education" },
+  { value: "Construction", label: "Construction" },
+  { value: "Hospitality", label: "Hospitality" },
+  { value: "Other", label: "Other" },
+];
+
+/** Standard country options for the country dropdown. */
+const COUNTRY_OPTIONS: SelectOption[] = [
+  { value: "Sweden", label: "Sweden" },
+  { value: "Norway", label: "Norway" },
+  { value: "Denmark", label: "Denmark" },
+  { value: "Finland", label: "Finland" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Germany", label: "Germany" },
+  { value: "France", label: "France" },
+  { value: "Spain", label: "Spain" },
+  { value: "Italy", label: "Italy" },
+  { value: "Netherlands", label: "Netherlands" },
+  { value: "Belgium", label: "Belgium" },
+  { value: "United States", label: "United States" },
+  { value: "Canada", label: "Canada" },
+  { value: "Australia", label: "Australia" },
+  { value: "Other", label: "Other" },
+];
 
 type Company = { id: string; name: string };
 type ProspectOption = { id: string; fieldType: string; value: string };
@@ -31,17 +64,23 @@ export function AddLeadForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useNewCompany, setUseNewCompany] = useState(false);
+  const [leadSource, setLeadSource] = useState<string>("");
 
-  const industrySelectOptions: SelectOption[] = industryOptions.map((o) => ({
-    value: o.value,
-    label: o.value,
-  }));
+  const industrySelectOptions: SelectOption[] =
+    industryOptions?.length > 0
+      ? industryOptions.map((o) => ({ value: o.value, label: o.value }))
+      : DEFAULT_INDUSTRIES;
   const sizeTurnoverSelectOptions: SelectOption[] = sizeTurnoverOptions.map(
     (o) => ({ value: o.value, label: o.value })
   );
   const sizePersonnelSelectOptions: SelectOption[] = sizePersonnelOptions.map(
     (o) => ({ value: o.value, label: o.value })
   );
+  const showReferralFrom = leadSource === "REFERRAL";
+
+  useEffect(() => {
+    if (open) setLeadSource("");
+  }, [open]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,6 +117,7 @@ export function AddLeadForm({
     if (result.ok) {
       form.reset();
       setUseNewCompany(false);
+      setLeadSource("");
       setOpen(false);
     } else {
       setError(result.error ?? "Something went wrong");
@@ -183,6 +223,11 @@ export function AddLeadForm({
                     options={sizeTurnoverSelectOptions}
                     placeholder="Select"
                   />
+                  {sizeTurnoverSelectOptions.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Define options in Settings → Prospect key metrics.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Size (personnel)</Label>
@@ -191,6 +236,11 @@ export function AddLeadForm({
                     options={sizePersonnelSelectOptions}
                     placeholder="Select"
                   />
+                  {sizePersonnelSelectOptions.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Define options in Settings → Prospect key metrics.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
@@ -204,7 +254,12 @@ export function AddLeadForm({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
-                  <Input id="country" name="country" placeholder="Country" />
+                  <Select
+                    id="country"
+                    name="country"
+                    options={COUNTRY_OPTIONS}
+                    placeholder="Select country"
+                  />
                 </div>
               </div>
             </div>
@@ -213,6 +268,8 @@ export function AddLeadForm({
             <Label>Lead source</Label>
             <Select
               name="leadSource"
+              value={leadSource}
+              onChange={(e) => setLeadSource(e.target.value)}
               options={LEAD_SOURCE_OPTIONS.map((o) => ({
                 value: o.value,
                 label: o.label,
@@ -220,17 +277,16 @@ export function AddLeadForm({
               placeholder="Select source"
             />
           </div>
-          <div className="space-y-2" id="referralFromSection">
-            <Label htmlFor="referralFrom">Referral from (who?)</Label>
-            <Input
-              id="referralFrom"
-              name="referralFrom"
-              placeholder="Name or source of referral"
-            />
-            <p className="text-xs text-muted-foreground">
-              Shown when lead source is Referral.
-            </p>
-          </div>
+          {showReferralFrom && (
+            <div className="space-y-2" id="referralFromSection">
+              <Label htmlFor="referralFrom">Referral from (who?)</Label>
+              <Input
+                id="referralFrom"
+                name="referralFrom"
+                placeholder="Name or source of referral"
+              />
+            </div>
+          )}
           <div className="flex gap-2">
             <Button type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save lead"}
