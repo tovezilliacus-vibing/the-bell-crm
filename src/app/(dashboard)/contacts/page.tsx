@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { personDisplayName } from "@/lib/leads";
 import { FUNNEL_STAGE_LABELS } from "@/lib/funnel";
-import type { FunnelStage } from "@prisma/client";
+import type { FunnelStage, Prisma } from "@prisma/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -19,6 +19,14 @@ import { getProspectFieldOptions } from "../settings/prospect-metrics-actions";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const STAGES: (FunnelStage | "ALL")[] = ["ALL", "AWARENESS", "INTEREST", "DESIRE", "ACTION"];
+
+type ContactWithRelations = Prisma.ContactGetPayload<{
+  include: {
+    company: { select: { name: true } };
+    activities: { orderBy: { occurredAt: "desc" }; take: 1; select: { occurredAt: true } };
+    tasks: { where: { status: "PENDING" }; orderBy: { dueAt: "asc" }; take: 1; select: { dueAt: true; id: true } };
+  };
+}>;
 
 export default async function ContactListPage({
   searchParams,
@@ -43,8 +51,8 @@ export default async function ContactListPage({
   }
 
   let workspaceId: string;
-  let contacts: Awaited<ReturnType<typeof prisma.contact.findMany>>;
-  let companies: Awaited<ReturnType<typeof prisma.company.findMany>>;
+  let contacts: ContactWithRelations[];
+  let companies: { id: string; name: string }[];
   let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptions>>;
   try {
     workspaceId = await ensureWorkspaceForUser(userId);

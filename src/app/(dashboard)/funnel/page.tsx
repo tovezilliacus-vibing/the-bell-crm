@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 import {
@@ -11,6 +12,10 @@ import {
 import { personDisplayName } from "@/lib/leads";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+type ContactWithCompany = Prisma.ContactGetPayload<{
+  include: { company: { select: { name: true } } };
+}>;
 
 export default async function FunnelPage() {
   const { userId } = await auth();
@@ -26,7 +31,7 @@ export default async function FunnelPage() {
   }
 
   let metrics: Awaited<ReturnType<typeof getFunnelMetrics>>;
-  let contactsByStage: Awaited<ReturnType<typeof prisma.contact.findMany>>[];
+  let contactsByStage: ContactWithCompany[][];
   try {
     const workspaceId = await ensureWorkspaceForUser(userId);
     [metrics, contactsByStage] = await Promise.all([

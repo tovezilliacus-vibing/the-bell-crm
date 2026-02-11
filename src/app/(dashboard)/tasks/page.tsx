@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,8 +45,10 @@ export default async function TasksPage({
   }
 
   let workspaceId: string;
-  let tasks: Awaited<ReturnType<typeof prisma.task.findMany>>;
-  let contact: Awaited<ReturnType<typeof prisma.contact.findFirst>>;
+  let tasks: Prisma.TaskGetPayload<{
+    include: { contact: { select: { id: true; firstName: true; lastName: true; name: true } } };
+  }>[];
+  let contact: { id: string; firstName: string | null; lastName: string | null; name: string | null } | null;
   try {
     workspaceId = await ensureWorkspaceForUser(userId);
     const dateWhere = getDateRange(filter);
