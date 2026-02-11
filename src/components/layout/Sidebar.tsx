@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
@@ -10,7 +11,6 @@ import {
   Building2,
   Handshake,
   CheckSquare,
-  Briefcase,
   Megaphone,
   Filter,
   BarChart3,
@@ -42,11 +42,18 @@ export function Sidebar() {
   const { user } = useUser();
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-border bg-card">
-      <div className="flex h-14 items-center border-b border-border px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Briefcase className="h-6 w-6 text-primary" />
-          <span>The Bell CRM</span>
+    <aside className="flex h-full w-56 flex-col border-r border-border bg-card/95 backdrop-blur-sm">
+      <div className="flex h-14 items-center border-b border-primary bg-primary px-3">
+        <Link href="/" className="flex items-center gap-2 font-semibold min-w-0">
+          <Image
+            src="/logo.png"
+            alt="The Bell"
+            width={120}
+            height={32}
+            className="h-8 w-auto object-contain object-left"
+            priority
+          />
+          <span className="text-xs text-primary-foreground/80 shrink-0">CRM</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-0.5 p-2">

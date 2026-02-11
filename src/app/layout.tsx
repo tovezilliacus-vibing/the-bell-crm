@@ -17,7 +17,10 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className="antialiased min-h-screen">
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <div className="app-backdrop" aria-hidden />
+            <div className="app-content">{children}</div>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
