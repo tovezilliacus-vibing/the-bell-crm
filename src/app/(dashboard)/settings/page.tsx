@@ -20,8 +20,8 @@ import { prisma } from "@/lib/db";
 export default async function SettingsPage() {
   const user = await currentUser();
   const { userId } = await auth();
-  const prospectOptions = userId ? await getProspectFieldOptions(userId) : [];
 
+  let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptions>> = [];
   let usage: {
     plan: string;
     contacts: number;
@@ -31,8 +31,10 @@ export default async function SettingsPage() {
     deals: number;
     dealsLimit: number;
   } | null = null;
-  if (userId) {
-    try {
+
+  try {
+    if (userId) {
+      prospectOptions = await getProspectFieldOptions(userId);
       const workspaceId = await ensureWorkspaceForUser(userId);
       const [workspace, contactsCount, membersCount, dealsCount] = await Promise.all([
         getWorkspace(workspaceId),
@@ -52,11 +54,11 @@ export default async function SettingsPage() {
           dealsLimit: limits.deals,
         };
       }
-    } catch (e) {
-      console.error("[Settings] load failed:", e);
-      const { PageUnavailable } = await import("@/components/PageUnavailable");
-      return <PageUnavailable message="We couldn't load settings. Please try again." />;
     }
+  } catch (e) {
+    console.error("[Settings] load failed:", e);
+    const { PageUnavailable } = await import("@/components/PageUnavailable");
+    return <PageUnavailable message="We couldn't load settings. Please try again." />;
   }
 
   return (

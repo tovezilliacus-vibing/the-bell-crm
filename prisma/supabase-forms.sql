@@ -74,6 +74,15 @@ ALTER TABLE forms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_submissions ENABLE ROW LEVEL SECURITY;
 
+-- Drop policies if they exist so this script is safe to re-run
+DROP POLICY IF EXISTS "Workspace members can read forms" ON forms;
+DROP POLICY IF EXISTS "Workspace members can insert forms" ON forms;
+DROP POLICY IF EXISTS "Workspace members can update forms" ON forms;
+DROP POLICY IF EXISTS "Workspace members can delete forms" ON forms;
+DROP POLICY IF EXISTS "Workspace members can read form_fields" ON form_fields;
+DROP POLICY IF EXISTS "Workspace members can manage form_fields" ON form_fields;
+DROP POLICY IF EXISTS "Workspace members can read form_submissions" ON form_submissions;
+
 -- Policy: workspace members can manage forms (use service role or postgres for API; these apply to anon/authenticated)
 CREATE POLICY "Workspace members can read forms"
   ON forms FOR SELECT

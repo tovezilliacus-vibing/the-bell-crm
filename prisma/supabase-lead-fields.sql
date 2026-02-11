@@ -1,11 +1,15 @@
 -- Run in Supabase: SQL Editor → New query → paste all → Run
 -- Adds lead/company fields and user-defined prospect key metrics (Phase 4)
 
--- Lead source enum for Person
-CREATE TYPE "LeadSource" AS ENUM ('INBOUND', 'OUTREACH', 'EVENT', 'REFERRAL', 'OTHER');
+-- Lead source enum for Person (skip if already exists, e.g. from forms or AIDA migration)
+DO $$ BEGIN
+  CREATE TYPE "LeadSource" AS ENUM ('INBOUND', 'OUTREACH', 'EVENT', 'REFERRAL', 'OTHER');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
--- Person: first/last name, lead source, referral
-ALTER TABLE "persons"
+-- Contacts: first/last name, lead source, referral (table is "contacts" in AIDA schema)
+ALTER TABLE "contacts"
   ADD COLUMN IF NOT EXISTS "firstName" TEXT,
   ADD COLUMN IF NOT EXISTS "lastName" TEXT,
   ADD COLUMN IF NOT EXISTS "leadSource" "LeadSource",

@@ -62,7 +62,7 @@
   }
 }
 
-/* Full-page background image (Lucid Origin – smooth flow) */
+/* Lucid image: full on landing/sign-in (root), opaque in app (dashboard) */
 .app-backdrop {
   position: fixed;
   inset: 0;
@@ -71,10 +71,26 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.45;
+  opacity: 1;
   pointer-events: none;
 }
 .app-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+.dashboard-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.88;
+  pointer-events: none;
+}
+.dashboard-content {
   position: relative;
   z-index: 1;
   min-height: 100vh;

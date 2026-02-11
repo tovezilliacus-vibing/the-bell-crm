@@ -8,9 +8,16 @@ CREATE TABLE IF NOT EXISTS "contact_stage_history" (
   CONSTRAINT "contact_stage_history_pkey" PRIMARY KEY ("id")
 );
 
-ALTER TABLE "contact_stage_history"
-  ADD CONSTRAINT "contact_stage_history_contactId_fkey"
-  FOREIGN KEY ("contactId") REFERENCES "contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'contact_stage_history_contactId_fkey'
+  ) THEN
+    ALTER TABLE "contact_stage_history"
+      ADD CONSTRAINT "contact_stage_history_contactId_fkey"
+      FOREIGN KEY ("contactId") REFERENCES "contacts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "contact_stage_history_contactId_createdAt_idx"
   ON "contact_stage_history"("contactId", "createdAt");
