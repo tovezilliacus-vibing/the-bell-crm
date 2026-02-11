@@ -35,20 +35,25 @@ export async function getFunnelMetrics(workspaceId: string): Promise<FunnelMetri
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const [counts, history] = await Promise.all([
-    prisma.contact.groupBy({
-      by: ["funnelStage"],
-      where: { workspaceId },
-      _count: { funnelStage: true },
-    }),
-    prisma.contactStageHistory.findMany({
+  const counts = await prisma.contact.groupBy({
+    by: ["funnelStage"],
+    where: { workspaceId },
+    _count: { funnelStage: true },
+  });
+
+  let history: { fromStage: FunnelStage | null; toStage: FunnelStage }[] = [];
+  try {
+    history = await prisma.contactStageHistory.findMany({
       where: {
         contact: { workspaceId },
         createdAt: { gte: thirtyDaysAgo },
       },
       select: { fromStage: true, toStage: true },
-    }),
-  ]);
+    });
+  } catch (e) {
+    // Table may not exist in production yet; conversion metrics will be empty
+    console.warn("[funnel] contact_stage_history query failed:", e);
+  }
 
   const stageCounts: StageCounts = {
     AWARENESS: 0,

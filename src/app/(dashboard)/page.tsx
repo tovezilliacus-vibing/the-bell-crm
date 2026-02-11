@@ -29,11 +29,13 @@ import {
 export default async function DashboardPage() {
   const { userId } = await auth();
   let workspaceId: string | null = null;
+  let dashboardError: string | null = null;
+
   try {
     workspaceId = userId ? await ensureWorkspaceForUser(userId) : null;
   } catch (e) {
     console.error("[Dashboard] ensureWorkspaceForUser failed:", e);
-    throw e;
+    dashboardError = "We couldn't load your workspace. Please try again.";
   }
 
   let funnelMetrics: Awaited<ReturnType<typeof getFunnelMetrics>> | null = null;
@@ -43,7 +45,7 @@ export default async function DashboardPage() {
   let recentActivities: Awaited<ReturnType<typeof prisma.activity.findMany>> = [];
   let upcomingTasks: Awaited<ReturnType<typeof prisma.task.findMany>> = [];
 
-  if (workspaceId) {
+  if (workspaceId && !dashboardError) {
     try {
       [funnelMetrics, leadsNeedingAttention, dealCountsByStage, pendingTasksCount, recentActivities, upcomingTasks] =
         await Promise.all([
@@ -72,8 +74,22 @@ export default async function DashboardPage() {
         ]);
     } catch (e) {
       console.error("[Dashboard] data fetch failed:", e);
-      throw e;
+      dashboardError = "We couldn't load your dashboard data. Please try again.";
     }
+  }
+
+  if (dashboardError) {
+    return (
+      <div className="p-6">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+          <h2 className="text-lg font-semibold text-destructive">Dashboard unavailable</h2>
+          <p className="mt-2 text-muted-foreground">{dashboardError}</p>
+          <Button asChild className="mt-4">
+            <Link href="/">Try again</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const stageCounts = funnelMetrics?.stageCounts ?? {
