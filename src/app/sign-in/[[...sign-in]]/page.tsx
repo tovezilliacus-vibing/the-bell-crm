@@ -5,7 +5,6 @@ export default function SignInPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <SignIn
         appearance={{
-          theme: "simple",
           elements: {
             rootBox: "mx-auto",
             card: "shadow-none",
