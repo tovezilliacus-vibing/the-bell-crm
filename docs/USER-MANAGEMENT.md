@@ -2,7 +2,8 @@
 
 ## Overview
 
-- **Workspace members** have a role: **ADMIN** or **MEMBER**.
+- **On FREE plan**, the single user is always treated as an administrator (they can edit prospect key metrics and will see Team once you add the role column). No backfill is required for FREE users to keep access.
+- **Workspace members** have a role: **ADMIN** or **MEMBER** (used for STARTER and above).
 - **Admin** can:
   - Manage the account (Settings)
   - Invite new users (within the plan’s user limit)
@@ -24,6 +25,20 @@
 ## Testing: make “Joe Doe” an admin for a Starter workspace
 
 Use this to turn a test user (e.g. Joe Doe) into an admin for a workspace that has a Starter plan.
+
+### Option A – Run the script (from project root)
+
+1. **Find IDs** (see Option B step 1 below, or Supabase Table Editor + Clerk Dashboard).
+2. **Set env and run** (ensure `DATABASE_URL` is in your environment, e.g. from `.env`):
+   ```bash
+   export WORKSPACE_ID=clx...   # your workspace id from Supabase
+   export USER_ID=user_2...     # Joe Doe's Clerk user id from Clerk Dashboard
+   export DATABASE_URL='...'    # or: set -a && source .env && set +a
+   node scripts/upgrade-workspace-starter-admin.mjs
+   ```
+   The script sets the workspace plan to **STARTER** and that user’s role to **ADMIN**. Joe Doe must already be a member of the workspace.
+
+### Option B – Run SQL in Supabase
 
 ### 1. Find Joe Doe’s Clerk user ID and the workspace
 

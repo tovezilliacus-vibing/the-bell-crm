@@ -65,13 +65,24 @@ export async function getWorkspaceMemberRole(
   return member?.role ?? null;
 }
 
-/** True if the user is an admin of the workspace. */
+/** True if the user is an admin of the workspace. On FREE plan the single user is always admin. */
 export async function isWorkspaceAdmin(
   workspaceId: string,
   userId: string
 ): Promise<boolean> {
-  const role = await getWorkspaceMemberRole(workspaceId, userId);
-  return role === "ADMIN";
+  const [member, workspace] = await Promise.all([
+    prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+      select: { role: true },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { plan: true },
+    }),
+  ]);
+  if (!member) return false;
+  if (workspace?.plan === "FREE") return true;
+  return member.role === "ADMIN";
 }
 
 /** Get all members of a workspace (for admin UI). */
