@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { getWorkspaceAdminUserId, isWorkspaceAdmin } from "@/lib/workspace";
 
 export type ProspectFieldType = "industry" | "size_turnover" | "size_personnel";
 
@@ -14,12 +15,23 @@ export async function getProspectFieldOptions(userId: string) {
   return options;
 }
 
+/** Get prospect options for a workspace (admin's options; used in lead/contact forms). */
+export async function getProspectFieldOptionsForWorkspace(workspaceId: string) {
+  const adminUserId = await getWorkspaceAdminUserId(workspaceId);
+  if (!adminUserId) return [];
+  return getProspectFieldOptions(adminUserId);
+}
+
 export async function addProspectFieldOption(
   fieldType: ProspectFieldType,
   value: string
 ) {
   const { userId } = await auth();
   if (!userId) return { ok: false, error: "Not signed in" };
+  const { getWorkspaceId } = await import("@/lib/workspace");
+  const workspaceId = await getWorkspaceId(userId);
+  if (!workspaceId || !(await isWorkspaceAdmin(workspaceId, userId)))
+    return { ok: false, error: "Only an administrator can edit prospect key metrics" };
   const trimmed = value.trim();
   if (!trimmed) return { ok: false, error: "Value is required" };
   try {
@@ -46,6 +58,10 @@ export async function addProspectFieldOption(
 export async function removeProspectFieldOption(id: string) {
   const { userId } = await auth();
   if (!userId) return { ok: false, error: "Not signed in" };
+  const { getWorkspaceId } = await import("@/lib/workspace");
+  const workspaceId = await getWorkspaceId(userId);
+  if (!workspaceId || !(await isWorkspaceAdmin(workspaceId, userId)))
+    return { ok: false, error: "Only an administrator can edit prospect key metrics" };
   try {
     await prisma.prospectFieldOption.deleteMany({
       where: { id, userId },

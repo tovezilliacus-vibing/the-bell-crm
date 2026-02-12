@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { ContactListStageTabs } from "./ContactListStageTabs";
 import { AddLeadForm } from "../leads/AddLeadForm";
-import { getProspectFieldOptions } from "../settings/prospect-metrics-actions";
+import { getProspectFieldOptionsForWorkspace } from "../settings/prospect-metrics-actions";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
 const STAGES: (FunnelStage | "ALL")[] = ["ALL", "AWARENESS", "INTEREST", "DESIRE", "ACTION"];
@@ -53,7 +53,7 @@ export default async function ContactListPage({
   let workspaceId: string;
   let contacts: ContactWithRelations[];
   let companies: { id: string; name: string }[];
-  let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptions>>;
+  let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptionsForWorkspace>>;
   try {
     workspaceId = await ensureWorkspaceForUser(userId);
     [contacts, companies, prospectOptions] = await Promise.all([
@@ -80,7 +80,7 @@ export default async function ContactListPage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
-    getProspectFieldOptions(userId),
+    getProspectFieldOptionsForWorkspace(workspaceId),
   ]);
   } catch (e) {
     console.error("[Contacts] load failed:", e);

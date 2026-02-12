@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,88 @@ const FIELD_TYPE_LABELS: Record<FormFieldType, string> = {
   checkbox: "Checkbox",
   hidden: "Hidden",
 };
+
+function FieldRow({
+  field,
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+  onUpdateLabel,
+  onUpdateName,
+}: {
+  field: FormField;
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRemove: () => void;
+  onUpdateLabel: (label: string) => Promise<unknown>;
+  onUpdateName: (name: string) => Promise<unknown>;
+}) {
+  const [label, setLabel] = useState(field.label);
+  const [name, setName] = useState(field.name);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    setLabel(field.label);
+    setName(field.name);
+  }, [field.id, field.label, field.name]);
+
+  const handleLabelBlur = () => {
+    const trimmed = label.trim() || field.label;
+    if (trimmed === field.label) return;
+    setPending(true);
+    onUpdateLabel(trimmed).finally(() => setPending(false));
+  };
+
+  const handleNameBlur = () => {
+    const normalized = name.trim().replace(/\s+/g, "_") || field.name;
+    if (normalized === field.name) return;
+    setPending(true);
+    onUpdateName(name).finally(() => setPending(false));
+  };
+
+  return (
+    <li className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2">
+      <span className="text-muted-foreground">
+        <GripVertical className="h-4 w-4" />
+      </span>
+      <Input
+        className="h-8 max-w-[180px] font-medium"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        onBlur={handleLabelBlur}
+        placeholder="Label"
+        title="Label (what visitors see)"
+      />
+      <span className="text-muted-foreground text-xs">→</span>
+      <Input
+        className="h-8 max-w-[120px] text-xs font-mono"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={handleNameBlur}
+        placeholder="name"
+        title="Field name (for mapping)"
+      />
+      <span className="text-xs text-muted-foreground">{FIELD_TYPE_LABELS[field.type]}</span>
+      {field.required && <span className="text-xs text-muted-foreground">Required</span>}
+      {pending && <span className="text-xs text-muted-foreground">Saving…</span>}
+      <div className="flex items-center gap-0">
+        <Button type="button" variant="ghost" size="icon" onClick={onMoveUp} disabled={index === 0}>
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="icon" onClick={onMoveDown} disabled={index === total - 1}>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </div>
+      <Button type="button" variant="ghost" size="icon" onClick={onRemove}>
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </Button>
+    </li>
+  );
+}
 
 export function FormEditor({
   form,
@@ -74,12 +156,12 @@ export function FormEditor({
       <Card>
         <CardHeader>
           <CardTitle>Settings</CardTitle>
-          <CardDescription>Name, thank-you message, and redirect after submit.</CardDescription>
+          <CardDescription>Name, thank-you message, and redirect after submit. Changes save when you leave a field.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={saveSettings} />
+            <Label>Form name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} onBlur={saveSettings} placeholder="e.g. Contact us" />
           </div>
           <div className="grid gap-2">
             <Label>Description (internal)</Label>
@@ -110,7 +192,7 @@ export function FormEditor({
       <Card>
         <CardHeader>
           <CardTitle>Fields</CardTitle>
-          <CardDescription>Add and order fields. Submissions map by field name (e.g. email, name).</CardDescription>
+          <CardDescription>Add fields with the buttons below. Click a field&apos;s label or name to edit. Use names like <code className="bg-muted px-1 rounded text-xs">email</code> or <code className="bg-muted px-1 rounded text-xs">name</code> so submissions map to contacts.</CardDescription>
           <div className="flex flex-wrap gap-2 pt-2">
             {(["text", "email", "textarea", "checkbox", "hidden"] as FormFieldType[]).map((type) => (
               <Button key={type} variant="outline" size="sm" onClick={() => addField(type)}>
@@ -121,48 +203,21 @@ export function FormEditor({
         </CardHeader>
         <CardContent>
           {form.fields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No fields yet. Add one above.</p>
+            <p className="text-sm text-muted-foreground">No fields yet. Click a button above to add one (e.g. + Text or + Email).</p>
           ) : (
             <ul className="space-y-2">
               {form.fields.map((field, index) => (
-                <li
+                <FieldRow
                   key={field.id}
-                  className="flex items-center gap-2 rounded-md border px-3 py-2"
-                >
-                  <span className="text-muted-foreground">
-                    <GripVertical className="h-4 w-4" />
-                  </span>
-                  <span className="flex-1 font-medium">{field.label}</span>
-                  <span className="text-xs text-muted-foreground">{field.name}</span>
-                  <span className="text-xs">{FIELD_TYPE_LABELS[field.type]}</span>
-                  {field.required && <span className="text-xs text-muted-foreground">Required</span>}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => moveField(field.id, "up")}
-                    disabled={index === 0}
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => moveField(field.id, "down")}
-                    disabled={index === form.fields.length - 1}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeField(field.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </li>
+                  field={field}
+                  index={index}
+                  total={form.fields.length}
+                  onMoveUp={() => moveField(field.id, "up")}
+                  onMoveDown={() => moveField(field.id, "down")}
+                  onRemove={() => removeField(field.id)}
+                  onUpdateLabel={(label) => updateFormField(field.id, { label }).then(() => router.refresh())}
+                  onUpdateName={(name) => updateFormField(field.id, { name: name.trim().replace(/\s+/g, "_") || field.name }).then(() => router.refresh())}
+                />
               ))}
             </ul>
           )}

@@ -45,6 +45,15 @@ export default async function FormDetailPage({
         )}
       </div>
 
+      <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground mb-1">How to use this page</p>
+        <ol className="list-decimal list-inside space-y-0.5">
+          <li><strong>Settings</strong> — Give your form a name and, if you like, a thank-you message or redirect URL after submit.</li>
+          <li><strong>Fields</strong> — Add fields (e.g. Text, Email), then <strong>click each label</strong> to edit what visitors see. Use field names like <code className="bg-muted px-1 rounded">email</code> or <code className="bg-muted px-1 rounded">name</code> so submissions map to contacts.</li>
+          <li><strong>Embed</strong> — Copy the code and add it to your website. Submissions will appear here and create or update contacts.</li>
+        </ol>
+      </div>
+
       <FormEditor form={form} />
 
       <EmbedCodeBlock

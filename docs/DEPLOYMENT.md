@@ -28,13 +28,18 @@ If **all** dashboard pages show “Page unavailable” (or “We couldn’t load
 1. **Core schema** (if the DB was created from scratch): `prisma/supabase-init.sql` or your main migration.
 2. **Workspace & billing** (required for Dashboard, Contacts, Tasks, etc.):  
    `prisma/supabase-workspace-billing.sql`
-3. **Verify workspace columns** on existing tables:  
+3. **Workspace roles & invites** (admin/member, invite by email):  
+   `prisma/supabase-workspace-roles.sql`  
+   Then run once to make existing members admins:  
+   `UPDATE workspace_members SET role = 'ADMIN';`  
+   See **docs/USER-MANAGEMENT.md** for user management and testing.
+4. **Verify workspace columns** on existing tables:  
    `prisma/supabase-verify-workspace-columns.sql`
-4. **Contact stage history** (for Funnel conversion metrics):  
+5. **Contact stage history** (for Funnel conversion metrics):  
    `prisma/supabase-contact-stage-history.sql`
-5. **Forms**: `prisma/supabase-forms.sql`
-6. **Automation**: `prisma/supabase-automation-recipe-settings.sql`
-7. **Prospect field options** (for Settings prospect metrics): `prisma/supabase-lead-fields.sql`
+6. **Forms**: `prisma/supabase-forms.sql`
+7. **Automation**: `prisma/supabase-automation-recipe-settings.sql`
+8. **Prospect field options** (for Settings prospect metrics): `prisma/supabase-lead-fields.sql`
 
 After running the scripts, redeploy or refresh the app. To see the **exact** error (e.g. missing table name), check **Vercel → your project → Logs** (or **Functions**) and look for `[Dashboard] ensureWorkspaceForUser failed:` or `[Settings] load failed:` etc.
 

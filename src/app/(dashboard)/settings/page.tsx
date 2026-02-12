@@ -11,17 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getProspectFieldOptions } from "./prospect-metrics-actions";
+import { getProspectFieldOptions, getProspectFieldOptionsForWorkspace } from "./prospect-metrics-actions";
 import { ProspectMetricsEditor } from "./ProspectMetricsEditor";
-import { ensureWorkspaceForUser, getWorkspace } from "@/lib/workspace";
+import { ensureWorkspaceForUser, getWorkspace, getWorkspaceMembers, getWorkspaceInvites, isWorkspaceAdmin } from "@/lib/workspace";
 import { getPlanLimits } from "@/lib/plans";
 import { prisma } from "@/lib/db";
+import { TeamManagementSection } from "./TeamManagementSection";
 
 export default async function SettingsPage() {
   const user = await currentUser();
   const { userId } = await auth();
 
   let prospectOptions: Awaited<ReturnType<typeof getProspectFieldOptions>> = [];
+  let prospectOptionsIsAdmin = false;
+  let teamMembers: Awaited<ReturnType<typeof getWorkspaceMembers>> = [];
+  let teamInvites: Awaited<ReturnType<typeof getWorkspaceInvites>> = [];
+  let teamUsersLimit = 1;
   let usage: {
     plan: string;
     contacts: number;
@@ -34,13 +39,19 @@ export default async function SettingsPage() {
 
   try {
     if (userId) {
-      prospectOptions = await getProspectFieldOptions(userId);
       const workspaceId = await ensureWorkspaceForUser(userId);
-      const [workspace, contactsCount, membersCount, dealsCount] = await Promise.all([
+      const isAdmin = await isWorkspaceAdmin(workspaceId, userId);
+      prospectOptions = isAdmin
+        ? await getProspectFieldOptions(userId)
+        : await getProspectFieldOptionsForWorkspace(workspaceId);
+      prospectOptionsIsAdmin = isAdmin;
+      const [workspace, contactsCount, membersCount, dealsCount, members, invites] = await Promise.all([
         getWorkspace(workspaceId),
         prisma.contact.count({ where: { workspaceId } }),
         prisma.workspaceMember.count({ where: { workspaceId } }),
         prisma.deal.count({ where: { workspaceId } }),
+        isAdmin ? getWorkspaceMembers(workspaceId) : [],
+        isAdmin ? getWorkspaceInvites(workspaceId) : [],
       ]);
       const limits = workspace ? getPlanLimits(workspace.plan) : null;
       if (workspace && limits) {
@@ -53,6 +64,11 @@ export default async function SettingsPage() {
           deals: dealsCount,
           dealsLimit: limits.deals,
         };
+        if (isAdmin) {
+          teamMembers = members;
+          teamInvites = invites;
+          teamUsersLimit = limits.users;
+        }
       }
     }
   } catch (e) {
@@ -153,19 +169,31 @@ export default async function SettingsPage() {
         </Card>
       )}
 
+      {prospectOptionsIsAdmin && (
+        <TeamManagementSection
+          members={teamMembers}
+          invites={teamInvites}
+          usersLimit={teamUsersLimit}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Prospect key metrics</CardTitle>
           <CardDescription>
-            Define dropdown options for industry, size (turnover), and size (personnel) when adding or editing leads and companies.
+            Define dropdown options for industry, size (turnover), and size (personnel) when adding or editing leads and companies. Only an administrator can edit these.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {userId ? (
+          {!userId ? (
+            <p className="text-sm text-muted-foreground">
+              <Link href="/sign-in" className="underline hover:no-underline">Sign in</Link> to define and edit these options.
+            </p>
+          ) : prospectOptionsIsAdmin ? (
             <ProspectMetricsEditor options={prospectOptions} />
           ) : (
             <p className="text-sm text-muted-foreground">
-              <Link href="/sign-in" className="underline hover:no-underline">Sign in</Link> to define and edit these options.
+              Only an administrator can edit prospect key metrics. You can view and use the options set by your admin when adding contacts.
             </p>
           )}
         </CardContent>

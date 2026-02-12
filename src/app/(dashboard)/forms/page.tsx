@@ -61,7 +61,7 @@ export default async function FormsListPage() {
         <CardContent>
           {forms.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">
-              No forms yet. Create one to get an embed code for your website.
+              No forms yet. Click <strong>Create form</strong> to add one, then add fields and copy the embed code to your website.
             </p>
           ) : (
             <Table>

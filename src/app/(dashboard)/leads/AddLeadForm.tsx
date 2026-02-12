@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, type SelectOption } from "@/components/ui/select";
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { LEAD_SOURCE_OPTIONS } from "@/lib/leads";
 import type { LeadSource } from "@prisma/client";
 import { createLead } from "./actions";
@@ -20,25 +21,6 @@ const DEFAULT_INDUSTRIES: SelectOption[] = [
   { value: "Education", label: "Education" },
   { value: "Construction", label: "Construction" },
   { value: "Hospitality", label: "Hospitality" },
-  { value: "Other", label: "Other" },
-];
-
-/** Standard country options for the country dropdown. */
-const COUNTRY_OPTIONS: SelectOption[] = [
-  { value: "Sweden", label: "Sweden" },
-  { value: "Norway", label: "Norway" },
-  { value: "Denmark", label: "Denmark" },
-  { value: "Finland", label: "Finland" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "Germany", label: "Germany" },
-  { value: "France", label: "France" },
-  { value: "Spain", label: "Spain" },
-  { value: "Italy", label: "Italy" },
-  { value: "Netherlands", label: "Netherlands" },
-  { value: "Belgium", label: "Belgium" },
-  { value: "United States", label: "United States" },
-  { value: "Canada", label: "Canada" },
-  { value: "Australia", label: "Australia" },
   { value: "Other", label: "Other" },
 ];
 
@@ -254,11 +236,10 @@ export function AddLeadForm({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
-                  <Select
+                  <SearchableCountrySelect
                     id="country"
                     name="country"
-                    options={COUNTRY_OPTIONS}
-                    placeholder="Select country"
+                    placeholder="Search or select country"
                   />
                 </div>
               </div>
