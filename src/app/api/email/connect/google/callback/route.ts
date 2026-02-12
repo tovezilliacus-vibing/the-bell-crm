@@ -3,20 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { exchangeGoogleCode } from "@/lib/email-connection";
 import { prisma } from "@/lib/db";
 
+/** Base URL for redirects; no trailing slash. Must match the redirect_uri sent to Google. */
+function getBaseUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const trimmed = raw.replace(/\/$/, "");
+  if (trimmed.includes("thebellcrm.eu") && !trimmed.includes("app.thebellcrm.eu")) {
+    return "https://app.thebellcrm.eu";
+  }
+  return trimmed;
+}
+
 export async function GET(request: NextRequest) {
+  const baseUrl = getBaseUrl();
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.redirect(new URL("/sign-in", process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"));
+    return NextResponse.redirect(new URL("/sign-in", baseUrl));
   }
 
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(
-      new URL("/settings?error=email_connect_no_code", process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000")
-    );
+    return NextResponse.redirect(new URL("/settings?error=email_connect_no_code", baseUrl));
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const redirectUri = `${baseUrl}/api/email/connect/google/callback`;
 
   try {

@@ -3,7 +3,7 @@ const APP_URL = "https://app.thebellcrm.eu";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="max-w-2xl w-full text-center space-y-8">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           The BELL CRM

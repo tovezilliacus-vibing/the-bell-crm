@@ -62,7 +62,6 @@
   }
 }
 
-/* Lucid image: full on landing/sign-in (root), opaque in app (dashboard) */
 .app-backdrop {
   position: fixed;
   inset: 0;
@@ -71,7 +70,6 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 1;
   pointer-events: none;
 }
 .app-content {
