@@ -60,9 +60,11 @@ You’ve already **enabled Gmail API**. Do the following next.
    - Look for a blue or gray **button/link** that says **Add or remove scopes** or **ADD OR REMOVE SCOPES**. It’s usually in the middle of that section.
    - Click it. A **side panel** or **popup** opens with a long list of APIs and a **search/filter** box at the top.
 
-3. **Add the two scopes**
+3. **Add the three scopes**
    - In the **filter/search** box at the top of the panel, type: `gmail.send`
    - In the list, find the scope whose URL ends with **`/auth/gmail.send`** (description like “Send email on your behalf”). **Check the box** next to it.
+   - Clear the search box and type: `gmail.readonly`
+   - Find the scope **`/auth/gmail.readonly`** (Read your email). **Check the box** next to it (needed to sync received emails into the CRM).
    - Clear the search box and type: `userinfo.email`
    - Find the scope **`/auth/userinfo.email`** (description like “See your primary Google Account email address”). **Check the box** next to it.
 
@@ -134,7 +136,10 @@ Set `NEXT_PUBLIC_APP_URL` to your production URL (e.g. `https://app.thebellcrm.e
 
 - **Settings → Your email (1:1 sending)**: User clicks **Connect Gmail**, signs in with Google, and authorizes the app. The app stores an access token and refresh token in `user_email_accounts`.
 - **Automations**: When a recipe runs a “send email” action, the app uses that user’s connected Gmail (if any) and sends via Gmail API. If no account is connected, the send is logged only (stub).
+- **Receive / sync inbox**: User clicks **Sync inbox** in Settings. The app fetches recent incoming Gmail, matches each sender email to a contact in the CRM (by workspace), or creates a new contact if none exists. Emails are stored and shown on the contact detail page.
 - **Disconnect**: User can click **Disconnect** in Settings to remove the connection.
+
+If you already had Gmail connected before the **read** scope was added, disconnect and connect again so the app can sync received emails.
 
 ## Outlook (Microsoft 365)
 

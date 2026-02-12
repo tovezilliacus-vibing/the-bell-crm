@@ -367,15 +367,16 @@ model FormSubmission {
 // ——— Phase 6: Email in CRM ———
 
 model UserEmailAccount {
-  id           String   @id @default(cuid())
-  userId       String
-  provider     String
-  email        String
-  accessToken  String
-  refreshToken String?
-  expiresAt    DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  provider         String
+  email            String
+  accessToken      String
+  refreshToken     String?
+  expiresAt        DateTime?
+  lastEmailSyncAt  DateTime? // last time we synced incoming mail (for incremental fetch)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   emails Email[]
 

@@ -50,6 +50,10 @@ export default async function ContactDetailPage({
       deals: {
         include: { company: { select: { name: true } } },
       },
+      emails: {
+        orderBy: { sentAt: "desc" },
+        take: 50,
+      },
     },
   });
 
@@ -185,6 +189,34 @@ export default async function ContactDetailPage({
           />
         </CardContent>
       </Card>
+
+      {/* Emails */}
+      {contact.emails.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Email</CardTitle>
+            <CardDescription>Inbound and outbound mail synced from your inbox. Sync in Settings → Your email.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {contact.emails.map((e) => (
+                <li key={e.id} className="rounded-md border px-3 py-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+                    <span className={e.direction === "inbound" ? "text-blue-600 dark:text-blue-400" : "text-green-600 dark:text-green-400"}>
+                      {e.direction === "inbound" ? "In" : "Out"}
+                    </span>
+                    <span>{new Date(e.sentAt).toLocaleString()}</span>
+                  </div>
+                  <p className="font-medium mt-1">{e.subject ?? "(No subject)"}</p>
+                  {e.bodySnippet && (
+                    <p className="text-muted-foreground mt-1 line-clamp-2">{e.bodySnippet}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Activities timeline */}
       <Card>

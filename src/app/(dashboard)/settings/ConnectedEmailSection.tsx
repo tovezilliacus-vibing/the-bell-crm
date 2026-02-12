@@ -12,27 +12,62 @@ export function ConnectedEmailSection({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [syncPending, setSyncPending] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   if (connected) {
     const label = connected.provider === "gmail" ? "Gmail" : connected.provider;
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm">
-          Connected as <strong>{connected.email}</strong> ({label})
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={async () => {
-            setPending(true);
-            await disconnectEmailAccount();
-            setPending(false);
-            router.refresh();
-          }}
-        >
-          {pending ? "…" : "Disconnect"}
-        </Button>
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm">
+            Connected as <strong>{connected.email}</strong> ({label})
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={async () => {
+              setPending(true);
+              await disconnectEmailAccount();
+              setPending(false);
+              router.refresh();
+            }}
+          >
+            {pending ? "…" : "Disconnect"}
+          </Button>
+          {connected.provider === "gmail" && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={syncPending}
+              onClick={async () => {
+                setSyncPending(true);
+                setSyncMessage(null);
+                try {
+                  const res = await fetch("/api/email/sync", { method: "POST" });
+                  const data = await res.json();
+                  if (data.ok) {
+                    setSyncMessage(
+                      `Synced ${data.synced ?? 0} email(s). ${data.createdContacts ? `Created ${data.createdContacts} new contact(s).` : ""}`
+                    );
+                    router.refresh();
+                  } else {
+                    setSyncMessage(data.error ?? "Sync failed");
+                  }
+                } catch {
+                  setSyncMessage("Sync failed");
+                }
+                setSyncPending(false);
+              }}
+            >
+              {syncPending ? "Syncing…" : "Sync inbox"}
+            </Button>
+          )}
+        </div>
+        {syncMessage && (
+          <p className="text-sm text-muted-foreground">{syncMessage}</p>
+        )}
       </div>
     );
   }
