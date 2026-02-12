@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ export default async function SettingsPage() {
   let teamMembers: Awaited<ReturnType<typeof getWorkspaceMembers>> = [];
   let teamInvites: Awaited<ReturnType<typeof getWorkspaceInvites>> = [];
   let teamUsersLimit = 1;
+  let teamPlan: "FREE" | "STARTER" | "GROWTH" | "PAID" = "FREE";
+  let memberDisplayNames: Record<string, string> = {};
   let usage: {
     plan: string;
     contacts: number;
@@ -68,6 +70,26 @@ export default async function SettingsPage() {
           teamMembers = members;
           teamInvites = invites;
           teamUsersLimit = limits.users;
+          teamPlan = workspace.plan;
+          if (members.length > 0) {
+            try {
+              const client = await clerkClient();
+              const names = await Promise.all(
+                members.map(async (m) => {
+                  try {
+                    const u = await client.users.getUser(m.userId);
+                    const name = u.fullName?.trim() || [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || m.userId;
+                    return { userId: m.userId, name };
+                  } catch {
+                    return { userId: m.userId, name: m.userId };
+                  }
+                })
+              );
+              memberDisplayNames = Object.fromEntries(names.map((n) => [n.userId, n.name]));
+            } catch {
+              memberDisplayNames = {};
+            }
+          }
         }
       }
     }
@@ -174,6 +196,8 @@ export default async function SettingsPage() {
           members={teamMembers}
           invites={teamInvites}
           usersLimit={teamUsersLimit}
+          plan={teamPlan}
+          memberDisplayNames={memberDisplayNames}
         />
       )}
 

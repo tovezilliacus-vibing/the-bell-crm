@@ -22,10 +22,14 @@ export function TeamManagementSection({
   members,
   invites,
   usersLimit,
+  plan,
+  memberDisplayNames = {},
 }: {
   members: Member[];
   invites: Invite[];
   usersLimit: number;
+  plan: "FREE" | "STARTER" | "GROWTH" | "PAID";
+  memberDisplayNames?: Record<string, string>;
 }) {
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
@@ -70,19 +74,23 @@ export function TeamManagementSection({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((m) => (
-              <TableRow key={m.id}>
-                <TableCell className="font-mono text-sm">{m.userId}</TableCell>
-                <TableCell>
-                  <span className={m.role === "ADMIN" ? "font-medium" : "text-muted-foreground"}>
-                    {m.role === "ADMIN" ? "Admin" : "Member"}
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {new Date(m.createdAt).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            ))}
+            {members.map((m) => {
+              const displayName = memberDisplayNames[m.userId] ?? m.userId;
+              const isAdmin = plan === "FREE" || m.role === "ADMIN";
+              return (
+                <TableRow key={m.id}>
+                  <TableCell>{displayName}</TableCell>
+                  <TableCell>
+                    <span className={isAdmin ? "font-medium" : "text-muted-foreground"}>
+                      {isAdmin ? "Admin" : "Member"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {new Date(m.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
 
