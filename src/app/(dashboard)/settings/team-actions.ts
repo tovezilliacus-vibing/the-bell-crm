@@ -80,16 +80,16 @@ export async function inviteByEmail(email: string, role: "ADMIN" | "MEMBER" = "M
     const signUpUrl = appUrl ? `${appUrl}/sign-up` : "";
     const inviter = await currentUser();
     const inviterName =
-      (inviter?.firstName || inviter?.lastName
+      ((inviter?.firstName || inviter?.lastName
         ? [inviter.firstName, inviter.lastName].filter(Boolean).join(" ")
-        : null) || inviter?.primaryEmailAddress?.emailAddress ?? "A teammate";
+        : null) || inviter?.primaryEmailAddress?.emailAddress) ?? "A teammate";
 
     const emailResult = await sendEmail({
       to: trimmed,
       subject: `You're invited to join ${workspace.name}`,
       templateId: "workspace-invite",
       context: {
-        workspaceName: workspace.name,
+        workspaceName: workspace.name ?? "Workspace",
         inviterName,
         signUpUrl,
       },

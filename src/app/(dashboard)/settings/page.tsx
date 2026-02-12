@@ -121,6 +121,21 @@ export default async function SettingsPage() {
         </p>
       )}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Your email (1:1 sending)</CardTitle>
+          <CardDescription>
+            Connect your own Gmail so automations and 1:1 nurture emails are sent from your mailbox, not a marketing service. Replies stay in your inbox.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ConnectedEmailSection connected={connectedEmail} />
+          <p className="text-sm text-muted-foreground mt-3">
+            Automation recipes that send email will use this account when enabled. Outlook support coming soon.
+          </p>
+        </CardContent>
+      </Card>
+
       {usage && (
         <Card>
           <CardHeader>
@@ -168,21 +183,6 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your email (1:1 sending)</CardTitle>
-          <CardDescription>
-            Connect your own Gmail so automations and 1:1 nurture emails are sent from your mailbox, not a marketing service. Replies stay in your inbox.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ConnectedEmailSection connected={connectedEmail} />
-          <p className="text-sm text-muted-foreground mt-3">
-            Automation recipes that send email will use this account when enabled. Outlook support coming soon.
-          </p>
-        </CardContent>
-      </Card>
 
       {prospectOptionsIsAdmin && (
         <TeamManagementSection
