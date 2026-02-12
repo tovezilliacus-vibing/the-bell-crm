@@ -43,7 +43,13 @@ export function TeamManagementSection({
     setPending(false);
     if (result.ok) {
       setEmail("");
-      setMessage({ type: "ok", text: "Invite sent. They can sign up with this email and will be added to the workspace." });
+      setMessage({
+        type: "ok",
+        text:
+          result.emailSent === true
+            ? "Invite sent. They'll receive an email with a sign-up link."
+            : "Invite saved. Connect Gmail under \"Your email (1:1 sending)\" above to email them; they can also sign up with this address and they'll join automatically.",
+      });
     } else {
       setMessage({ type: "error", text: result.error ?? "Failed to send invite" });
     }

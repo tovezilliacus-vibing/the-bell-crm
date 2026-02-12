@@ -36,11 +36,18 @@ export default async function AutomationPage() {
         </p>
       </div>
 
+      <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground mb-1">How to manage</p>
+        <p>
+          Use the <strong>On / Off</strong> switch for each recipe. When a recipe is On, it runs automatically when its trigger happens (e.g. new contact in Awareness, or contact moved to Desire). Task steps are created in the CRM. To send real 1:1 emails from your own mailbox, connect your Gmail in <strong>Settings → Your email (1:1 sending)</strong>.
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Recipes</CardTitle>
           <CardDescription>
-            Preconfigured automations. Enable or disable per recipe. Email sending is stubbed until you connect a provider.
+            Preconfigured automations. Switch On to enable; Off to disable. No extra configuration needed.
           </CardDescription>
         </CardHeader>
         <CardContent>

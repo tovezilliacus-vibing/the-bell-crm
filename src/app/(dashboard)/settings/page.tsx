@@ -14,8 +14,10 @@ import { ProspectMetricsEditor } from "./ProspectMetricsEditor";
 import { ensureWorkspaceForUser, getWorkspace, getWorkspaceMembers, getWorkspaceInvites, isWorkspaceAdmin } from "@/lib/workspace";
 import { getPlanLimits } from "@/lib/plans";
 import { prisma } from "@/lib/db";
+import { getConnectedEmailAccount } from "@/lib/email-connection";
 import { TeamManagementSection } from "./TeamManagementSection";
 import { PlanUpgradeButton } from "./PlanUpgradeButton";
+import { ConnectedEmailSection } from "./ConnectedEmailSection";
 
 export default async function SettingsPage() {
   const user = await currentUser();
@@ -28,6 +30,7 @@ export default async function SettingsPage() {
   let teamUsersLimit = 1;
   let teamPlan: "FREE" | "STARTER" | "GROWTH" | "PAID" = "FREE";
   let memberDisplayNames: Record<string, string> = {};
+  let connectedEmail: { provider: string; email: string } | null = null;
   let usage: {
     plan: string;
     contacts: number;
@@ -46,14 +49,16 @@ export default async function SettingsPage() {
         ? await getProspectFieldOptions(userId)
         : await getProspectFieldOptionsForWorkspace(workspaceId);
       prospectOptionsIsAdmin = isAdmin;
-      const [workspace, contactsCount, membersCount, dealsCount, members, invites] = await Promise.all([
+      const [workspace, contactsCount, membersCount, dealsCount, members, invites, emailAccount] = await Promise.all([
         getWorkspace(workspaceId),
         prisma.contact.count({ where: { workspaceId } }),
         prisma.workspaceMember.count({ where: { workspaceId } }),
         prisma.deal.count({ where: { workspaceId } }),
         isAdmin ? getWorkspaceMembers(workspaceId) : [],
         isAdmin ? getWorkspaceInvites(workspaceId) : [],
+        getConnectedEmailAccount(userId),
       ]);
+      if (emailAccount) connectedEmail = { provider: emailAccount.provider, email: emailAccount.email };
       const limits = workspace ? getPlanLimits(workspace.plan) : null;
       if (workspace && limits) {
         usage = {
@@ -163,6 +168,21 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your email (1:1 sending)</CardTitle>
+          <CardDescription>
+            Connect your own Gmail so automations and 1:1 nurture emails are sent from your mailbox, not a marketing service. Replies stay in your inbox.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ConnectedEmailSection connected={connectedEmail} />
+          <p className="text-sm text-muted-foreground mt-3">
+            Automation recipes that send email will use this account when enabled. Outlook support coming soon.
+          </p>
+        </CardContent>
+      </Card>
 
       {prospectOptionsIsAdmin && (
         <TeamManagementSection

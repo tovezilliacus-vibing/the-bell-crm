@@ -97,6 +97,7 @@ async function executeRecipe(
               name: contact.name ?? "",
             }
           : undefined,
+        userId,
       });
     } else if (action.type === "update_stage" && contactId) {
       const fromStage = event.type === "stage_changed" ? event.toStage : event.type === "contact_created" ? event.stage : null;

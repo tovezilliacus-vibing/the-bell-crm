@@ -21,7 +21,7 @@ CREATE TABLE "emails" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "userEmailAccountId" TEXT,
-    "personId" TEXT,
+    "contactId" TEXT,
     "provider" TEXT NOT NULL,
     "providerMessageId" TEXT NOT NULL,
     "threadId" TEXT,
@@ -40,7 +40,7 @@ CREATE TABLE "emails" (
 
 CREATE UNIQUE INDEX "emails_userId_provider_providerMessageId_key" ON "emails"("userId", "provider", "providerMessageId");
 
-ALTER TABLE "emails" ADD CONSTRAINT "emails_personId_fkey" FOREIGN KEY ("personId") REFERENCES "persons"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "emails" ADD CONSTRAINT "emails_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "contacts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "emails" ADD CONSTRAINT "emails_userEmailAccountId_fkey" FOREIGN KEY ("userEmailAccountId") REFERENCES "user_email_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- RLS

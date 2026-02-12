@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import {
@@ -10,6 +10,7 @@ import {
   getWorkspaceInvites,
 } from "@/lib/workspace";
 import { getPlanLimits } from "@/lib/plans";
+import { sendEmail } from "@/lib/automation/email-service";
 import type { BillingTier } from "@prisma/client";
 
 export async function updateWorkspacePlan(plan: BillingTier) {
@@ -74,8 +75,29 @@ export async function inviteByEmail(email: string, role: "ADMIN" | "MEMBER" = "M
       },
       update: { role, invitedByUserId: userId },
     });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
+    const signUpUrl = appUrl ? `${appUrl}/sign-up` : "";
+    const inviter = await currentUser();
+    const inviterName =
+      (inviter?.firstName || inviter?.lastName
+        ? [inviter.firstName, inviter.lastName].filter(Boolean).join(" ")
+        : null) || inviter?.primaryEmailAddress?.emailAddress ?? "A teammate";
+
+    const emailResult = await sendEmail({
+      to: trimmed,
+      subject: `You're invited to join ${workspace.name}`,
+      templateId: "workspace-invite",
+      context: {
+        workspaceName: workspace.name,
+        inviterName,
+        signUpUrl,
+      },
+      userId,
+    });
+
     revalidatePath("/settings");
-    return { ok: true };
+    return { ok: true, emailSent: emailResult.sent === true };
   } catch (e) {
     return { ok: false, error: "Failed to send invite" };
   }
