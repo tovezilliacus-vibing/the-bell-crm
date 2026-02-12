@@ -1,8 +1,6 @@
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,6 +15,7 @@ import { ensureWorkspaceForUser, getWorkspace, getWorkspaceMembers, getWorkspace
 import { getPlanLimits } from "@/lib/plans";
 import { prisma } from "@/lib/db";
 import { TeamManagementSection } from "./TeamManagementSection";
+import { PlanUpgradeButton } from "./PlanUpgradeButton";
 
 export default async function SettingsPage() {
   const user = await currentUser();
@@ -107,54 +106,28 @@ export default async function SettingsPage() {
           App and user profile.
         </p>
       </div>
-      {!user && (
+      {user ? (
+        <p className="text-sm text-muted-foreground">
+          Please manage your profile (name and email) in the avatar in the sidebar.
+        </p>
+      ) : (
         <p className="text-sm text-muted-foreground rounded-md bg-muted/50 px-3 py-2">
-          Sign in to see and edit your profile.
+          <Link href="/sign-in" className="underline hover:no-underline">Sign in</Link> to see and edit your profile.
         </p>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>
-            {user
-              ? "Your account is managed by Clerk. Edit your name and email in the account menu (avatar in the sidebar) or in the Clerk Dashboard."
-              : "Sign in to see your profile details."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Name</label>
-            <Input
-              placeholder="Your name"
-              defaultValue={user?.fullName ?? ""}
-              disabled
-            />
-          </div>
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Email</label>
-            <Input
-              type="email"
-              placeholder="Email"
-              defaultValue={user?.primaryEmailAddress?.emailAddress ?? ""}
-              disabled
-            />
-          </div>
-          <Button disabled>Save (profile managed by Clerk)</Button>
-          {!user && (
-            <p className="text-sm text-muted-foreground">
-              <Link href="/sign-in" className="underline hover:no-underline">Sign in</Link> to access your profile.
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       {usage && (
         <Card>
           <CardHeader>
-            <CardTitle>Usage</CardTitle>
-            <CardDescription>
-              Current usage vs plan limits. Billing (e.g. Mollie) can be connected later.
-            </CardDescription>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <CardTitle>Usage</CardTitle>
+                <CardDescription>
+                  Current usage vs plan limits. Billing (e.g. Mollie) can be connected later.
+                </CardDescription>
+              </div>
+              {prospectOptionsIsAdmin && <PlanUpgradeButton currentPlan={usage.plan} />}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>

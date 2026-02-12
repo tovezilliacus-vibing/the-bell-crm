@@ -10,6 +10,34 @@ import {
   getWorkspaceInvites,
 } from "@/lib/workspace";
 import { getPlanLimits } from "@/lib/plans";
+import type { BillingTier } from "@prisma/client";
+
+export async function updateWorkspacePlan(plan: BillingTier) {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "Not signed in" };
+
+  const workspaceId = await getWorkspaceId(userId);
+  if (!workspaceId) return { ok: false, error: "No workspace" };
+  if (!(await isWorkspaceAdmin(workspaceId, userId)))
+    return { ok: false, error: "Only an administrator can change the plan" };
+
+  try {
+    await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { plan },
+    });
+    if (plan === "STARTER" || plan === "GROWTH" || plan === "PAID") {
+      await prisma.workspaceMember.updateMany({
+        where: { workspaceId, userId },
+        data: { role: "ADMIN" },
+      });
+    }
+    revalidatePath("/settings");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Failed to update plan" };
+  }
+}
 
 export async function inviteByEmail(email: string, role: "ADMIN" | "MEMBER" = "MEMBER") {
   const { userId } = await auth();
