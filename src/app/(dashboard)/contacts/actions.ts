@@ -47,3 +47,23 @@ export async function updateContact(contactId: string, input: UpdateContactInput
   revalidatePath("/");
   return { ok: true };
 }
+
+/** Delete multiple contacts by ID (must belong to user's workspace). */
+export async function deleteContacts(contactIds: string[]) {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "Not signed in" };
+  if (!contactIds.length) return { ok: false, error: "No contacts selected" };
+
+  const workspaceId = await ensureWorkspaceForUser(userId);
+  const deleted = await prisma.contact.deleteMany({
+    where: {
+      id: { in: contactIds },
+      workspaceId,
+    },
+  });
+  revalidatePath("/contacts");
+  revalidatePath("/funnel");
+  revalidatePath("/leads");
+  revalidatePath("/");
+  return { ok: true, deleted: deleted.count };
+}

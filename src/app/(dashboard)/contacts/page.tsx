@@ -1,19 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { personDisplayName } from "@/lib/leads";
-import { FUNNEL_STAGE_LABELS } from "@/lib/funnel";
 import type { FunnelStage, Prisma } from "@prisma/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ContactListStageTabs } from "./ContactListStageTabs";
+import { ContactListTable, type ContactRow } from "./ContactListTable";
 import { AddLeadForm } from "../leads/AddLeadForm";
 import { getProspectFieldOptionsForWorkspace } from "../settings/prospect-metrics-actions";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
@@ -92,6 +82,23 @@ export default async function ContactListPage({
   const sizeTurnoverOptions = prospectOptions.filter((o) => o.fieldType === "size_turnover");
   const sizePersonnelOptions = prospectOptions.filter((o) => o.fieldType === "size_personnel");
 
+  const contactRows: ContactRow[] = contacts.map((c) => {
+    const lastActivity = c.activities[0]?.occurredAt;
+    const nextTask = c.tasks[0];
+    return {
+      id: c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      companyName: c.company?.name ?? null,
+      funnelStage: c.funnelStage,
+      lastActivity: lastActivity ? new Date(lastActivity).toLocaleDateString() : null,
+      nextTaskDue: nextTask?.dueAt ? new Date(nextTask.dueAt).toLocaleDateString() : null,
+    };
+  });
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -120,57 +127,10 @@ export default async function ContactListPage({
           <ContactListStageTabs currentStage={stageParam ?? "ALL"} />
         </CardHeader>
         <CardContent>
-          {contacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">
-              {stageFilter
-                ? `No contacts in ${FUNNEL_STAGE_LABELS[stageFilter]}.`
-                : "No contacts yet."}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Stage</TableHead>
-                  <TableHead>Last activity</TableHead>
-                  <TableHead>Next task due</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contacts.map((c) => {
-                  const lastActivity = c.activities[0]?.occurredAt;
-                  const nextTask = c.tasks[0];
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">
-                        <Link
-                          href={`/contacts/${c.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          {personDisplayName(c.firstName, c.lastName, c.name)}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{c.company?.name ?? "—"}</TableCell>
-                      <TableCell>
-                        {FUNNEL_STAGE_LABELS[c.funnelStage]}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {lastActivity
-                          ? new Date(lastActivity).toLocaleDateString()
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {nextTask?.dueAt
-                          ? new Date(nextTask.dueAt).toLocaleDateString()
-                          : "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+          <ContactListTable
+            contacts={contactRows}
+            stageFilter={stageParam ?? "ALL"}
+          />
         </CardContent>
       </Card>
     </div>
