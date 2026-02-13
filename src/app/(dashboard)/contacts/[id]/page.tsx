@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { StageBadge } from "./StageBadge";
 import { MoveStageForm } from "./MoveStageForm";
 import { PersonTypeForm } from "./PersonTypeForm";
+import { EditPersonForm } from "./EditPersonForm";
 import { ActivityTimeline } from "@/components/contacts/ActivityTimeline";
 import type { TimelineItem } from "@/components/contacts/ActivityTimeline";
 import { ContactDetailTasks } from "./ContactDetailTasks";
@@ -35,10 +36,11 @@ export default async function ContactDetailPage({
   }
 
   const workspaceId = await ensureWorkspaceForUser(userId);
-  const contact = await prisma.contact.findFirst({
-    where: { id, workspaceId },
-    include: {
-      company: true,
+  const [contact, companies] = await Promise.all([
+    prisma.contact.findFirst({
+      where: { id, workspaceId },
+      include: {
+        company: true,
       activities: {
         orderBy: { occurredAt: "desc" },
         take: 50,
@@ -57,7 +59,13 @@ export default async function ContactDetailPage({
         take: 50,
       },
     },
-  });
+  }),
+    prisma.company.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   if (!contact) notFound();
 
@@ -107,6 +115,15 @@ export default async function ContactDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <EditPersonForm
+            contactId={contact.id}
+            initialFirstName={contact.firstName}
+            initialLastName={contact.lastName}
+            initialEmail={contact.email}
+            initialPhone={contact.phone}
+            initialCompanyId={contact.companyId}
+            companies={companies}
+          />
           <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-sm font-medium">
             {contact.personType === "LEAD" ? "Lead" : "Contact"}
           </span>
