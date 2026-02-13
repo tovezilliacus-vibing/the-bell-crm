@@ -12,16 +12,22 @@ const TABS = [
 export function TaskListFilters({
   currentFilter,
   contactId,
+  searchQ,
 }: {
   currentFilter: string;
   contactId?: string | null;
+  searchQ?: string | null;
 }) {
-  const base = contactId ? `/tasks?contactId=${contactId}` : "/tasks";
-  const sep = base.includes("?") ? "&" : "?";
+  const params = new URLSearchParams();
+  if (contactId) params.set("contactId", contactId);
+  if (searchQ) params.set("q", searchQ);
+  const base = "/tasks";
   return (
     <div className="flex flex-wrap gap-1">
       {TABS.map((tab) => {
-        const href = `${base}${sep}filter=${tab.value}`;
+        const p = new URLSearchParams(params);
+        p.set("filter", tab.value);
+        const href = `${base}?${p.toString()}`;
         const isActive = currentFilter === tab.value || (!currentFilter && tab.value === "today");
         return (
           <Link

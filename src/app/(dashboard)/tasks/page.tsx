@@ -28,11 +28,12 @@ function getDateRange(filter: string) {
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; contactId?: string }>;
+  searchParams: Promise<{ filter?: string; contactId?: string; q?: string }>;
 }) {
   const { userId } = await auth();
-  const { filter: filterParam, contactId } = await searchParams;
+  const { filter: filterParam, contactId, q: searchQ } = await searchParams;
   const filter = filterParam === "overdue" || filterParam === "upcoming" ? filterParam : "today";
+  const q = searchQ?.trim() || null;
 
   if (!userId) {
     return (
@@ -58,6 +59,17 @@ export default async function TasksPage({
       status: "PENDING",
       ...dateWhere,
       ...(contactId && { contactId }),
+      ...(q && {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { contact: { OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { firstName: { contains: q, mode: "insensitive" } },
+            { lastName: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ] } },
+        ],
+      }),
     },
     include: {
       contact: {
@@ -95,7 +107,7 @@ export default async function TasksPage({
           <CardDescription>
             Filter by due date. Quick actions: Done, Snooze (+1 day), Edit due.
           </CardDescription>
-          <TaskListFilters currentFilter={filter} contactId={contactId} />
+          <TaskListFilters currentFilter={filter} contactId={contactId} searchQ={searchQ ?? null} />
         </CardHeader>
         <CardContent className="space-y-4">
           <CreateTaskForm

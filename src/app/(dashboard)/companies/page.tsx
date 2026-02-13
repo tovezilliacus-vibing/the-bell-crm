@@ -23,12 +23,13 @@ const LIFECYCLE_LABELS: Record<CompanyLifecycle, string> = {
 export default async function CompaniesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ lifecycle?: string }>;
+  searchParams: Promise<{ lifecycle?: string; q?: string }>;
 }) {
   const { userId } = await auth();
-  const { lifecycle: lifecycleParam } = await searchParams;
+  const { lifecycle: lifecycleParam, q: searchQ } = await searchParams;
   const lifecycleFilter: CompanyLifecycle | null =
     lifecycleParam === "PROSPECT" || lifecycleParam === "CUSTOMER" ? lifecycleParam : null;
+  const q = searchQ?.trim() || null;
 
   if (!userId) {
     return (
@@ -48,6 +49,12 @@ export default async function CompaniesPage({
       where: {
         workspaceId,
         ...(lifecycleFilter && { lifecycleStage: lifecycleFilter }),
+        ...(q && {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { industry: { contains: q, mode: "insensitive" } },
+          ],
+        }),
       },
       select: {
         id: true,
@@ -81,7 +88,7 @@ export default async function CompaniesPage({
           <CardDescription>
             Prospect = potential customer; Customer = won deals or otherwise marked as customer.
           </CardDescription>
-          <CompanyListTabs currentLifecycle={lifecycleParam ?? "ALL"} />
+          <CompanyListTabs currentLifecycle={lifecycleParam ?? "ALL"} searchQ={q ?? null} />
         </CardHeader>
         <CardContent>
           {companies.length === 0 ? (

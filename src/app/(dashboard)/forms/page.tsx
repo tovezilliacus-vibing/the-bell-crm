@@ -15,8 +15,13 @@ import {
 import { CopyEmbedButton } from "./CopyEmbedButton";
 import { FormActiveToggle } from "./FormActiveToggle";
 
-export default async function FormsListPage() {
+export default async function FormsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { userId } = await auth();
+  const { q: searchQ } = await searchParams;
   if (!userId) {
     return (
       <div className="p-6">
@@ -30,7 +35,7 @@ export default async function FormsListPage() {
   let forms: Awaited<ReturnType<typeof getForms>>;
   try {
     workspaceId = await ensureWorkspaceForUser(userId);
-    forms = await getForms(workspaceId);
+    forms = await getForms(workspaceId, searchQ ?? null);
   } catch (e) {
     console.error("[Forms] load failed:", e);
     const { PageUnavailable } = await import("@/components/PageUnavailable");

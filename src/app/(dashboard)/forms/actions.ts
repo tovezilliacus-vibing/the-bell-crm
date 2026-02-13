@@ -7,9 +7,13 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 import { generateFormPublicKey } from "@/lib/forms";
 import type { FormFieldType } from "@prisma/client";
 
-export async function getForms(workspaceId: string) {
+export async function getForms(workspaceId: string, searchQ?: string | null) {
+  const q = searchQ?.trim() || null;
   return prisma.form.findMany({
-    where: { workspaceId },
+    where: {
+      workspaceId,
+      ...(q && { name: { contains: q, mode: "insensitive" } }),
+    },
     include: {
       _count: { select: { submissions: true } },
       fields: { orderBy: { orderIndex: "asc" } },

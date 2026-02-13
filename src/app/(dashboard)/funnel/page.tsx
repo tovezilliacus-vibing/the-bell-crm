@@ -17,8 +17,14 @@ type ContactWithCompany = Prisma.ContactGetPayload<{
   include: { company: { select: { name: true } } };
 }>;
 
-export default async function FunnelPage() {
+export default async function FunnelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { userId } = await auth();
+  const { q: searchQ } = await searchParams;
+  const q = searchQ?.trim() || null;
 
   if (!userId) {
     return (
@@ -39,7 +45,19 @@ export default async function FunnelPage() {
     Promise.all(
       FUNNEL_STAGES.map((stage) =>
         prisma.contact.findMany({
-          where: { workspaceId, funnelStage: stage },
+          where: {
+            workspaceId,
+            funnelStage: stage,
+            ...(q && {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { firstName: { contains: q, mode: "insensitive" } },
+                { lastName: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+                { company: { name: { contains: q, mode: "insensitive" } } },
+              ],
+            }),
+          },
           include: { company: { select: { name: true } } },
           orderBy: { updatedAt: "desc" },
         })

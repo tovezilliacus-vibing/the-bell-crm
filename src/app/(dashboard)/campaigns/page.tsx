@@ -10,14 +10,23 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
-export default async function CampaignsPage() {
+export default async function CampaignsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { userId } = await auth();
+  const { q: searchQ } = await searchParams;
+  const q = searchQ?.trim() || null;
   let campaigns: Awaited<ReturnType<typeof prisma.campaign.findMany>> = [];
   try {
     const workspaceId = userId ? await ensureWorkspaceForUser(userId) : null;
     campaigns = workspaceId
       ? await prisma.campaign.findMany({
-          where: { workspaceId },
+          where: {
+            workspaceId,
+            ...(q && { name: { contains: q, mode: "insensitive" } }),
+          },
           orderBy: { createdAt: "desc" },
         })
       : [];

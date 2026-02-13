@@ -24,10 +24,10 @@ const PERSON_TYPES: (PersonType | "ALL")[] = ["ALL", "LEAD", "CONTACT"];
 export default async function ContactListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string; personType?: string }>;
+  searchParams: Promise<{ stage?: string; personType?: string; q?: string }>;
 }) {
   const { userId } = await auth();
-  const { stage: stageParam, personType: personTypeParam } = await searchParams;
+  const { stage: stageParam, personType: personTypeParam, q: searchQ } = await searchParams;
   const stageFilter: FunnelStage | null =
     stageParam && STAGES.includes(stageParam as FunnelStage) && stageParam !== "ALL"
       ? (stageParam as FunnelStage)
@@ -36,6 +36,7 @@ export default async function ContactListPage({
     personTypeParam && PERSON_TYPES.includes(personTypeParam as PersonType) && personTypeParam !== "ALL"
       ? (personTypeParam as PersonType)
       : null;
+  const q = searchQ?.trim() || null;
 
   if (!userId) {
     return (
@@ -59,6 +60,15 @@ export default async function ContactListPage({
         workspaceId,
         ...(stageFilter && { funnelStage: stageFilter }),
         ...(personTypeFilter && { personType: personTypeFilter }),
+        ...(q && {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { firstName: { contains: q, mode: "insensitive" } },
+            { lastName: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+            { company: { name: { contains: q, mode: "insensitive" } } },
+          ],
+        }),
       },
       include: {
         company: { select: { name: true } },
@@ -139,10 +149,12 @@ export default async function ContactListPage({
           <ContactListStageTabs
             currentStage={stageParam ?? "ALL"}
             personTypeParam={personTypeParam ?? null}
+            searchQ={q ?? null}
           />
           <ContactListPersonTypeTabs
             currentPersonType={personTypeParam ?? "ALL"}
             stageParam={stageParam ?? null}
+            searchQ={q ?? null}
           />
         </CardHeader>
         <CardContent>

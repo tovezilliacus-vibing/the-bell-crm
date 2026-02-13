@@ -12,14 +12,18 @@ const TABS = [
 export function ContactListPersonTypeTabs({
   currentPersonType,
   stageParam,
+  searchQ,
 }: {
   currentPersonType: string;
   stageParam: string | null;
+  searchQ?: string | null;
 }) {
   const base = "/contacts";
   const stageQ = stageParam && stageParam !== "ALL" ? `stage=${stageParam}` : "";
+  const qParam = searchQ ? `q=${encodeURIComponent(searchQ)}` : "";
   function href(value: string) {
-    const q = value === "ALL" ? stageQ : [stageQ, `personType=${value}`].filter(Boolean).join("&");
+    const parts = value === "ALL" ? [stageQ] : [stageQ, `personType=${value}`];
+    const q = [...parts.filter(Boolean), qParam].filter(Boolean).join("&");
     return q ? `${base}?${q}` : base;
   }
 
