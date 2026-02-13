@@ -17,7 +17,7 @@ export type SyncResult = {
   createdContacts?: number;
 };
 
-/** Find contact by email in workspace, or create a new contact. Returns contactId. */
+/** Find contact by email in workspace (case-insensitive), or create a new contact. Returns contactId. */
 async function findOrCreateContact(
   workspaceId: string,
   userId: string,
@@ -27,8 +27,12 @@ async function findOrCreateContact(
   const normalized = email.trim().toLowerCase();
   if (!normalized) throw new Error("Empty email");
 
+  // Match existing contacts by email case-insensitively so app-created contacts (e.g. "Jane@x.com") are found
   const existing = await prisma.contact.findFirst({
-    where: { workspaceId, email: normalized },
+    where: {
+      workspaceId,
+      email: { equals: normalized, mode: "insensitive" },
+    },
     select: { id: true },
   });
   if (existing) return { contactId: existing.id, created: false };

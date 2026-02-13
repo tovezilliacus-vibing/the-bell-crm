@@ -6,6 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "The Bell CRM",
   description: "Customer Relationship Management",
+  icons: { icon: "/icon.png", apple: "/icon.png" },
 };
 
 export default function RootLayout({

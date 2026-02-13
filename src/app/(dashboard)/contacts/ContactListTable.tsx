@@ -164,7 +164,7 @@ export function ContactListTable({
                 checked={allSelected}
                 onChange={toggleAll}
                 aria-label="Select all"
-                className="h-4 w-4 rounded border-input"
+                className="h-4 w-4 rounded border-2 border-input bg-background accent-primary"
               />
             </TableHead>
             <TableHead>Name</TableHead>
@@ -183,7 +183,7 @@ export function ContactListTable({
                   checked={selected.has(c.id)}
                   onChange={() => toggleOne(c.id)}
                   aria-label={`Select ${personDisplayName(c.firstName, c.lastName, c.name)}`}
-                  className="h-4 w-4 rounded border-input"
+                  className="h-4 w-4 rounded border-2 border-input bg-background accent-primary"
                 />
               </TableCell>
               <TableCell className="font-medium">

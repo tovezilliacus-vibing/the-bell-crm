@@ -11,6 +11,7 @@ import { MoveStageForm } from "./MoveStageForm";
 import { ActivityTimeline } from "@/components/contacts/ActivityTimeline";
 import type { TimelineItem } from "@/components/contacts/ActivityTimeline";
 import { ContactDetailTasks } from "./ContactDetailTasks";
+import { ContactEmailsList } from "./ContactEmailsList";
 import { AddActivityForm } from "./AddActivityForm";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -192,28 +193,24 @@ export default async function ContactDetailPage({
 
       {/* Emails */}
       {contact.emails.length > 0 && (
-        <Card>
+        <Card className="bg-card">
           <CardHeader>
             <CardTitle>Email</CardTitle>
-            <CardDescription>Inbound and outbound mail synced from your inbox. Sync in Settings → Your email.</CardDescription>
+            <CardDescription>Inbound and outbound mail synced from your inbox. Click to open; reply or forward via your email client. Sync in Settings → Your email.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {contact.emails.map((e) => (
-                <li key={e.id} className="rounded-md border px-3 py-2 text-sm">
-                  <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span className={e.direction === "inbound" ? "text-blue-600 dark:text-blue-400" : "text-green-600 dark:text-green-400"}>
-                      {e.direction === "inbound" ? "In" : "Out"}
-                    </span>
-                    <span>{new Date(e.sentAt).toLocaleString()}</span>
-                  </div>
-                  <p className="font-medium mt-1">{e.subject ?? "(No subject)"}</p>
-                  {e.bodySnippet && (
-                    <p className="text-muted-foreground mt-1 line-clamp-2">{e.bodySnippet}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
+          <CardContent className="bg-card">
+            <ContactEmailsList
+              emails={contact.emails.map((e) => ({
+                id: e.id,
+                direction: e.direction,
+                fromAddress: e.fromAddress,
+                toAddresses: e.toAddresses,
+                subject: e.subject,
+                bodySnippet: e.bodySnippet,
+                body: e.body,
+                sentAt: e.sentAt,
+              }))}
+            />
           </CardContent>
         </Card>
       )}
