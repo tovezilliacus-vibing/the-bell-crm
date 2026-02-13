@@ -49,15 +49,16 @@ export default async function SettingsPage() {
         ? await getProspectFieldOptions(userId)
         : await getProspectFieldOptionsForWorkspace(workspaceId);
       prospectOptionsIsAdmin = isAdmin;
-      const [workspace, contactsCount, membersCount, dealsCount, members, invites, emailAccount] = await Promise.all([
+      const [workspace, contactsCount, membersCount, dealsCount, members, invites, emailAccountResult] = await Promise.all([
         getWorkspace(workspaceId),
         prisma.contact.count({ where: { workspaceId } }),
         prisma.workspaceMember.count({ where: { workspaceId } }),
         prisma.deal.count({ where: { workspaceId } }),
         isAdmin ? getWorkspaceMembers(workspaceId) : [],
         isAdmin ? getWorkspaceInvites(workspaceId) : [],
-        getConnectedEmailAccount(userId),
+        getConnectedEmailAccount(userId).catch(() => null),
       ]);
+      const emailAccount = emailAccountResult ?? null;
       if (emailAccount) connectedEmail = { provider: emailAccount.provider, email: emailAccount.email };
       const limits = workspace ? getPlanLimits(workspace.plan) : null;
       if (workspace && limits) {
