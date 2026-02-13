@@ -14,7 +14,7 @@ export async function createCompany(data: { name: string; lifecycleStage?: Compa
   const name = data.name?.trim();
   if (!name) return { ok: false, error: "Company name is required" };
 
-  await prisma.company.create({
+  const company = await prisma.company.create({
     data: {
       workspaceId,
       userId,
@@ -25,7 +25,7 @@ export async function createCompany(data: { name: string; lifecycleStage?: Compa
   revalidatePath("/companies");
   revalidatePath("/leads");
   revalidatePath("/contacts");
-  return { ok: true };
+  return { ok: true, companyId: company.id };
 }
 
 export async function updateCompany(

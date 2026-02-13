@@ -117,6 +117,7 @@ export default async function ContactDetailPage({
         <div className="flex flex-wrap items-center gap-2">
           <EditPersonForm
             contactId={contact.id}
+            initialName={contact.name}
             initialFirstName={contact.firstName}
             initialLastName={contact.lastName}
             initialEmail={contact.email}

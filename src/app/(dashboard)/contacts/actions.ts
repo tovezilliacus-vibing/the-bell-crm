@@ -9,6 +9,7 @@ import { ensureWorkspaceForUser } from "@/lib/workspace";
 export type UpdateContactInput = {
   firstName?: string | null;
   lastName?: string | null;
+  name?: string | null;
   email?: string | null;
   phone?: string | null;
   companyId?: string | null;
@@ -29,6 +30,7 @@ export async function updateContact(contactId: string, input: UpdateContactInput
   const data: Partial<UpdateContactInput> = {};
   if (input.firstName !== undefined) data.firstName = input.firstName?.trim() || null;
   if (input.lastName !== undefined) data.lastName = input.lastName?.trim() || null;
+  if (input.name !== undefined) data.name = input.name?.trim() || null;
   if (input.email !== undefined) data.email = input.email?.trim() || null;
   if (input.phone !== undefined) data.phone = input.phone?.trim() || null;
   if (input.companyId !== undefined) data.companyId = input.companyId || null;
