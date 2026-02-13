@@ -77,17 +77,13 @@ export default async function CompanyDetailPage({
             </span>
           </p>
         </div>
-        <EditCompanyForm
-          companyId={company.id}
-          currentName={company.name}
-          currentLifecycle={company.lifecycleStage}
-        />
+        <EditCompanyForm company={company} />
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Company details</CardTitle>
-          <CardDescription>Name and lifecycle stage. Lifecycle: Prospect or Customer.</CardDescription>
+          <CardDescription>Name, industry, address, and invoicing details.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <dl className="grid gap-3 sm:grid-cols-2">
@@ -98,6 +94,26 @@ export default async function CompanyDetailPage({
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Lifecycle</dt>
               <dd>{LIFECYCLE_LABELS[company.lifecycleStage]}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Industry</dt>
+              <dd>{company.industry ?? "—"}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-sm font-medium text-muted-foreground">Address</dt>
+              <dd className="mt-0.5">
+                {[company.streetAddress, company.city, company.state, company.country]
+                  .filter(Boolean)
+                  .join(", ") || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">VAT number</dt>
+              <dd>{company.vatNumber ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Registration number</dt>
+              <dd>{company.registrationNumber ?? "—"}</dd>
             </div>
           </dl>
         </CardContent>
