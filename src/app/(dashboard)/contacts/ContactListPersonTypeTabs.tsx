@@ -5,32 +5,30 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { value: "ALL", label: "All" },
-  { value: "AWARENESS", label: "Awareness" },
-  { value: "INTEREST", label: "Interest" },
-  { value: "DESIRE", label: "Desire" },
-  { value: "ACTION", label: "Action" },
+  { value: "LEAD", label: "Lead" },
+  { value: "CONTACT", label: "Contact" },
 ] as const;
 
-export function ContactListStageTabs({
-  currentStage,
-  personTypeParam,
+export function ContactListPersonTypeTabs({
+  currentPersonType,
+  stageParam,
 }: {
-  currentStage: string;
-  personTypeParam?: string | null;
+  currentPersonType: string;
+  stageParam: string | null;
 }) {
   const base = "/contacts";
-  const personQ = personTypeParam && personTypeParam !== "ALL" ? `personType=${personTypeParam}` : "";
+  const stageQ = stageParam && stageParam !== "ALL" ? `stage=${stageParam}` : "";
   function href(value: string) {
-    const stagePart = value === "ALL" ? "" : `stage=${value}`;
-    const q = [stagePart, personQ].filter(Boolean).join("&");
+    const q = value === "ALL" ? stageQ : [stageQ, `personType=${value}`].filter(Boolean).join("&");
     return q ? `${base}?${q}` : base;
   }
+
   return (
     <div className="flex flex-wrap gap-1 pt-2">
       {TABS.map((tab) => {
         const isActive =
-          (currentStage === "ALL" && tab.value === "ALL") ||
-          currentStage === tab.value;
+          (currentPersonType === "ALL" && tab.value === "ALL") ||
+          currentPersonType === tab.value;
         return (
           <Link
             key={tab.value}

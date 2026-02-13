@@ -14,8 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { personDisplayName } from "@/lib/leads";
 import { FUNNEL_STAGE_LABELS } from "@/lib/funnel";
-import type { FunnelStage } from "@prisma/client";
+import type { FunnelStage, PersonType } from "@prisma/client";
 import { deleteContacts } from "./actions";
+
+const PERSON_TYPE_LABELS: Record<PersonType, string> = {
+  LEAD: "Lead",
+  CONTACT: "Contact",
+};
 
 export type ContactRow = {
   id: string;
@@ -26,6 +31,7 @@ export type ContactRow = {
   phone: string | null;
   companyName: string | null;
   funnelStage: FunnelStage;
+  personType: PersonType;
   lastActivity: string | null;
   nextTaskDue: string | null;
 };
@@ -49,6 +55,7 @@ function exportSelectedAsCsv(contacts: ContactRow[], selectedIds: Set<string>) {
     "Email",
     "Phone",
     "Company",
+    "Type",
     "Stage",
     "Last activity",
     "Next task due",
@@ -63,6 +70,7 @@ function exportSelectedAsCsv(contacts: ContactRow[], selectedIds: Set<string>) {
         escapeCsvCell(c.email),
         escapeCsvCell(c.phone),
         escapeCsvCell(c.companyName),
+        escapeCsvCell(PERSON_TYPE_LABELS[c.personType]),
         escapeCsvCell(FUNNEL_STAGE_LABELS[c.funnelStage]),
         escapeCsvCell(c.lastActivity),
         escapeCsvCell(c.nextTaskDue),
@@ -73,7 +81,7 @@ function exportSelectedAsCsv(contacts: ContactRow[], selectedIds: Set<string>) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `persons-export-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -112,7 +120,7 @@ export function ContactListTable({
 
   async function handleDelete() {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} contact(s)? This cannot be undone.`)) return;
+    if (!confirm(`Delete ${selected.size} person(s)? This cannot be undone.`)) return;
     setPending(true);
     const result = await deleteContacts(Array.from(selected));
     setPending(false);
@@ -128,8 +136,8 @@ export function ContactListTable({
     return (
       <p className="text-sm text-muted-foreground py-4">
         {stageFilter && stageFilter !== "ALL"
-          ? `No contacts in ${FUNNEL_STAGE_LABELS[stageFilter as FunnelStage]}.`
-          : "No contacts yet."}
+          ? `No persons in ${FUNNEL_STAGE_LABELS[stageFilter as FunnelStage]}.`
+          : "No persons yet."}
       </p>
     );
   }
@@ -164,11 +172,12 @@ export function ContactListTable({
                 checked={allSelected}
                 onChange={toggleAll}
                 aria-label="Select all"
-                className="h-4 w-4 rounded border-2 border-input bg-background accent-primary"
+                className="size-4 shrink-0 rounded border-2 border-gray-400 bg-white shadow-sm transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-0 checked:border-primary checked:bg-primary dark:border-gray-500 dark:bg-gray-800 dark:checked:border-primary dark:checked:bg-primary"
               />
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Company</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Stage</TableHead>
             <TableHead>Last activity</TableHead>
             <TableHead>Next task due</TableHead>
@@ -183,7 +192,7 @@ export function ContactListTable({
                   checked={selected.has(c.id)}
                   onChange={() => toggleOne(c.id)}
                   aria-label={`Select ${personDisplayName(c.firstName, c.lastName, c.name)}`}
-                  className="h-4 w-4 rounded border-2 border-input bg-background accent-primary"
+                  className="size-4 shrink-0 rounded border-2 border-gray-400 bg-white shadow-sm transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-0 checked:border-primary checked:bg-primary dark:border-gray-500 dark:bg-gray-800 dark:checked:border-primary dark:checked:bg-primary"
                 />
               </TableCell>
               <TableCell className="font-medium">
@@ -195,6 +204,7 @@ export function ContactListTable({
                 </Link>
               </TableCell>
               <TableCell>{c.companyName ?? "—"}</TableCell>
+              <TableCell>{PERSON_TYPE_LABELS[c.personType]}</TableCell>
               <TableCell>{FUNNEL_STAGE_LABELS[c.funnelStage]}</TableCell>
               <TableCell className="text-muted-foreground text-sm">
                 {c.lastActivity ?? "—"}

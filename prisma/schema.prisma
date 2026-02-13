@@ -70,6 +70,16 @@ enum WorkspaceRole {
   MEMBER  // normal user
 }
 
+enum CompanyLifecycle {
+  PROSPECT
+  CUSTOMER
+}
+
+enum PersonType {
+  LEAD
+  CONTACT
+}
+
 // ——— Workspace (multi-team, billing) ———
 
 model Workspace {
@@ -142,26 +152,28 @@ model Campaign {
 }
 
 model Company {
-  id            String   @id @default(cuid())
-  name          String
-  domain        String?
-  isAccount     Boolean  @default(false)
-  workspaceId   String
-  userId        String
-  industry      String?
-  sizeTurnover  String?
-  sizePersonnel String?
-  city          String?
-  state         String?
-  country       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String           @id @default(cuid())
+  name           String
+  domain         String?
+  isAccount      Boolean          @default(false)
+  lifecycleStage CompanyLifecycle @default(PROSPECT)
+  workspaceId    String
+  userId         String
+  industry       String?
+  sizeTurnover   String?
+  sizePersonnel  String?
+  city           String?
+  state          String?
+  country        String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   contacts  Contact[]
   deals     Deal[]
 
   @@index([workspaceId])
+  @@index([workspaceId, lifecycleStage])
   @@map("companies")
 }
 
@@ -172,7 +184,8 @@ model Contact {
   name         String?
   email        String?
   phone        String?
-  funnelStage  FunnelStage   @default(AWARENESS)
+  personType   PersonType   @default(LEAD)
+  funnelStage  FunnelStage  @default(AWARENESS)
   campaignId   String?
   leadSource   LeadSource?
   referralFrom String?
@@ -195,6 +208,7 @@ model Contact {
   formSubmissions FormSubmission[]
 
   @@index([workspaceId])
+  @@index([workspaceId, personType])
   @@index([formId])
   @@map("contacts")
 }

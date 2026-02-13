@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "./StageBadge";
 import { MoveStageForm } from "./MoveStageForm";
+import { PersonTypeForm } from "./PersonTypeForm";
 import { ActivityTimeline } from "@/components/contacts/ActivityTimeline";
 import type { TimelineItem } from "@/components/contacts/ActivityTimeline";
 import { ContactDetailTasks } from "./ContactDetailTasks";
@@ -27,7 +28,7 @@ export default async function ContactDetailPage({
     return (
       <div className="p-6">
         <p className="text-sm text-muted-foreground rounded-md bg-muted/50 px-3 py-2">
-          Sign in to view this contact.
+          Sign in to view this person.
         </p>
       </div>
     );
@@ -94,7 +95,7 @@ export default async function ContactDetailPage({
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/contacts">← Contacts</Link>
+          <Link href="/contacts">← Persons</Link>
         </Button>
       </div>
 
@@ -105,7 +106,10 @@ export default async function ContactDetailPage({
             {contact.company?.name ?? "No company"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-sm font-medium">
+            {contact.personType === "LEAD" ? "Lead" : "Contact"}
+          </span>
           <StageBadge stage={contact.funnelStage} />
           <MoveStageForm
             contactId={contact.id}
@@ -122,6 +126,15 @@ export default async function ContactDetailPage({
         </CardHeader>
         <CardContent className="space-y-4">
           <dl className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Person type</dt>
+              <dd>
+                <PersonTypeForm
+                  contactId={contact.id}
+                  currentPersonType={contact.personType}
+                />
+              </dd>
+            </div>
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Stage</dt>
               <dd>

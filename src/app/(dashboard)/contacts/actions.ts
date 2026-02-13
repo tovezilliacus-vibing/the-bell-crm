@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import type { FunnelStage } from "@prisma/client";
+import type { FunnelStage, PersonType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { ensureWorkspaceForUser } from "@/lib/workspace";
 
@@ -13,6 +13,7 @@ export type UpdateContactInput = {
   phone?: string | null;
   companyId?: string | null;
   funnelStage?: FunnelStage;
+  personType?: PersonType;
 };
 
 export async function updateContact(contactId: string, input: UpdateContactInput) {
@@ -32,6 +33,7 @@ export async function updateContact(contactId: string, input: UpdateContactInput
   if (input.phone !== undefined) data.phone = input.phone?.trim() || null;
   if (input.companyId !== undefined) data.companyId = input.companyId || null;
   if (input.funnelStage !== undefined) data.funnelStage = input.funnelStage;
+  if (input.personType !== undefined) data.personType = input.personType;
 
   await prisma.contact.update({
     where: { id: contactId },
